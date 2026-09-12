@@ -1,0 +1,25 @@
+{
+    "name": "exact/exact",
+    "description": "Scala-inspired domain modeling library for PHP",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": ">=8.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Exact\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Exact\\Tests\\": "tests/"
+        }
+    },
+    "scripts": {
+        "test": "./vendor/bin/phpunit"
+    }
+}
