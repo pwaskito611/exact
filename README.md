@@ -40,7 +40,7 @@ $total = Result::ok(42)
 Exact requires PHP 8.2 or later and has no runtime dependencies.
 
 ```bash
-composer require exact/exact
+composer require pandu/exact
 ```
 
 ## Documentation
