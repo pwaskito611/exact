@@ -1,8 +1,8 @@
 # Algebraic Data Types
 
-Exact models a named alternative with `Variant`. `PatternMatch` creates a `Matcher` that dispatches the variant to a handler.
+Use `Variant` for a named domain state and `PatternMatch` to choose what to do for that state.
 
-## Basic Usage
+## Handle a State
 
 ```php
 use Exact\Adt\PatternMatch;
@@ -20,19 +20,21 @@ $message = PatternMatch::on($payment)
     ->run();
 ```
 
-The case handler receives the variant value. The default handler receives both the value and the variant name.
+`Variant::of($name, $value)` creates a state; the payload defaults to `null`. A matching case receives the payload. The default handler receives both the payload and the state name.
 
-## Defining and Inspecting Variants
+## Create and Inspect a Variant
 
 ```php
 $state = Variant::of('Pending');
 
-$state->name();
-$state->value();
-$state->is('Pending');
+$stateName = $state->name();
+$payload = $state->value();
+$isPending = $state->is('Pending');
 ```
 
-Case names are strings. If no case matches and no default handler exists, `run()` throws `MatchException`.
+Case names are strings. `name()` and `value()` return the name and payload; `is()` returns `bool`. `Variant`'s constructor is private, so use `of()`.
+
+`PatternMatch::on()` creates a `Matcher`. `case()` registers a handler and `default()` registers a fallback; both return the matcher so cases can be chained. Registering the same name again replaces its handler. `run()` returns the selected handler's result, or throws `MatchException` if no case or fallback handles the state. You can also construct a `Matcher` directly with a `Variant`.
 
 ## Next Steps
 

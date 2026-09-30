@@ -1,42 +1,81 @@
 # Either
 
-`Either` stores one of two branches: `Left` or `Right`. Its `map()` and `flatMap()` operations are right-biased, so they transform only `Right`.
+`Either` carries one of two meaningful alternatives. Its transformations are right-biased: `map()` and `flatMap()` work on `Right`, while `mapLeft()` works on `Left`.
 
-## When to Use It
-
-Use `Either` when both branches are meaningful alternatives and the domain naturally names them `Left` and `Right`. Use [Result](result.md) when the branches are specifically success and error.
-
-## Basic Usage
+## Quick Example
 
 ```php
 use Exact\Data\Either\Either;
 
-$accepted = Either::right(42);
-$rejected = Either::left('not available');
+$deliveryLabel = Either::right('courier')
+    ->map(static fn (string $method): string => strtoupper($method))
+    ->fold(
+        static fn (string $method): string => "Collect at {$method}",
+        static fn (string $method): string => "Ship by {$method}",
+    );
 ```
 
-## Right-Biased Transformations
+This keeps the two domain alternatives explicit. `Either` does not decide that `Left` means failure; your domain assigns meaning to each side.
+
+## When to Use Either
+
+Use `Either` when both sides are meaningful alternatives and the domain names them `Left` and `Right`. Use [Result](result.md) when the branches specifically mean success and failure.
+
+## Creating and Checking Branches
 
 ```php
-$value = Either::right(10)
-    ->map(static fn (int $number): int => $number * 2)
-    ->flatMap(static fn (int $number): Either => Either::right($number + 1));
+$pickup = Either::left('pickup');
+$courier = Either::right('courier');
+
+$isPickup = $pickup->isLeft();
+$isCourier = $courier->isRight();
 ```
 
-`mapLeft()` transforms only the `Left` branch. A `Left` passes through `map()` and `flatMap()` unchanged.
+`left()` and `right()` are the public factories; the constructor is private. `isLeft()` and `isRight()` return `bool`.
 
-## Handling Branches
+## Transforming an Alternative
 
 ```php
-$message = $value->fold(
-    static fn (mixed $error): string => "Left: {$error}",
-    static fn (int $number): string => "Right: {$number}",
+$courier = Either::right('courier')
+    ->map(static fn (string $method): string => strtoupper($method));
+
+$pickup = Either::left('front desk')
+    ->mapLeft(static fn (string $location): string => strtoupper($location));
+```
+
+`map()` transforms only `Right`; `mapLeft()` transforms only `Left`. The other branch is returned unchanged. Use `flatMap()` when the `Right` callback returns another `Either`; a non-`Either` result causes `TypeError` when that callback runs.
+
+```php
+$delivery = Either::right('courier')->flatMap(
+    static fn (string $method): Either => $method === 'courier'
+        ? Either::right('tracked courier')
+        : Either::left('unsupported delivery method'),
 );
 ```
 
-Use `isLeft()` and `isRight()` when a branch check is useful. `getLeft()` and `getRight()` throw `LogicException` when called on the opposite branch.
+## Handling Either Branch
+
+`fold()` calls `onLeft` or `onRight` and returns that callback's result. `getOrElse()` returns the `Right` payload or a raw fallback:
+
+```php
+$label = Either::left('front desk')->fold(
+    static fn (string $location): string => "Collect at {$location}",
+    static fn (string $method): string => "Ship by {$method}",
+);
+
+$method = Either::right('courier')->getOrElse('pickup');
+```
+
+`getLeft()` and `getRight()` extract a known branch and throw `LogicException` on the opposite branch. `get()` returns the payload without checking which side contains it; prefer `fold()` when the distinction matters. `swap()` returns a new `Either` with the same payload on the opposite side:
+
+```php
+$leftValue = Either::left('pickup')->getLeft();
+$rightValue = Either::right('courier')->getRight();
+$payload = Either::right('courier')->get();
+$reversed = Either::left('pickup')->swap();
+```
 
 ## Next Steps
 
-- Compare branch-oriented workflows with [Result](result.md).
-- Use [Pattern Matching](../patterns/pattern-matching.md) when branch names are part of a larger state model.
+- Compare two-sided domain alternatives with [Result](result.md).
+- Match named states with [Pattern Matching](../patterns/pattern-matching.md).

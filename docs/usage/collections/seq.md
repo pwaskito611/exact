@@ -1,51 +1,82 @@
 # Seq
 
-`Seq` is an ordered sequence that may be empty.
+`Seq` is an ordered collection that can be empty.
 
-## Basic Usage
+## Quick Example
 
 ```php
 use Exact\Collection\Seq;
 
-$numbers = Seq::of(1, 2, 3, 4);
-$evenSquares = $numbers
-    ->filter(static fn (int $number): bool => $number % 2 === 0)
-    ->map(static fn (int $number): int => $number ** 2);
+$featuredProducts = Seq::of('book', 'pen', 'bag')
+    ->filter(static fn (string $product): bool => str_starts_with($product, 'b'))
+    ->map(static fn (string $product): string => strtoupper($product))
+    ->append('NOTEBOOK');
 
-$values = $evenSquares->toArray(); // [4, 16]
+$products = $featuredProducts->toArray(); // ['BOOK', 'BAG', 'NOTEBOOK']
 ```
 
-## Common Operations
+Each transformation returns a new `Seq`; the input remains unchanged.
 
-`head()` returns the first value and `tail()` returns the remaining sequence. Both throw `EmptyCollectionException` for an empty sequence. `get()` accesses a zero-based index and throws `OutOfBoundsException` when it is missing.
+## Creating a Sequence
 
-`flatMap()` combines the values from `Seq` results:
+Use `empty()` for no items, `of(...$items)` for individual values, or `fromArray($items)` for an existing array. The factories normalize indexes to a zero-based sequence:
 
 ```php
-$expanded = Seq::of(1, 2)->flatMap(
-    static fn (int $value): Seq => Seq::of($value, $value * 10),
+$empty = Seq::empty();
+$catalog = Seq::fromArray(['book', 'pen']);
+```
+
+## Checking and Reading Items
+
+`isEmpty()`, `isNotEmpty()`, and `size()` describe the collection. `head()` reads the first item, `tail()` returns the remaining `Seq`, and `get()` reads a zero-based index:
+
+```php
+$products = Seq::of('book', 'pen');
+$hasProducts = $products->isNotEmpty();
+$isEmpty = Seq::empty()->isEmpty();
+$count = $products->size();
+$first = $products->head();
+$rest = $products->tail();
+$second = $products->get(1);
+$hasPen = $products->contains('pen');
+```
+
+`head()` and `tail()` throw `EmptyCollectionException` on an empty sequence. `get()` throws `OutOfBoundsException` for an index that does not exist. `contains()` uses strict comparison.
+
+Use `each()` only when a callback needs a side effect; it returns `void`:
+
+```php
+$products->each(static function (string $product): void {
+    error_log($product);
+});
+```
+
+## Transforming and Reducing
+
+`map()` transforms each item; `filter()` keeps items whose predicate returns `true`. `flatMap()` combines the `Seq` returned for each item:
+
+```php
+$expanded = Seq::of('book', 'pen')->flatMap(
+    static fn (string $product): Seq => Seq::of($product, "gift-{$product}"),
 );
 ```
 
-Use `foldLeft()` to reduce a sequence to one value:
+The `flatMap()` callback must return a `Seq`, or the call throws `TypeError`. Use `foldLeft()` to reduce items to one result:
 
 ```php
-$total = Seq::of(2, 3, 5)->foldLeft(
-    0,
-    static fn (int $total, int $value): int => $total + $value,
+$label = $products->foldLeft(
+    'Catalog:',
+    static fn (string $label, string $product): string => "{$label} {$product}",
 );
 ```
 
-`contains()` uses strict comparison. `each()` runs a callback for every value.
+## Adding Items
 
-## Immutability in Practice
+`append()` adds to the end and `prepend()` adds to the start. Both return a new `Seq`; `toArray()` returns its values as a zero-based PHP array:
 
 ```php
-$original = Seq::of(1, 2);
-$extended = $original->append(3);
-
-$original->toArray(); // [1, 2]
-$extended->toArray(); // [1, 2, 3]
+$original = Seq::of('pen');
+$updated = $original->prepend('book')->append('bag');
 ```
 
 ## Next Steps

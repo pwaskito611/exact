@@ -1,27 +1,49 @@
 # Set
 
-`Set` stores unique values using strict comparison and preserves insertion order.
+`Set` keeps strictly unique values in insertion order.
 
-## Basic Usage
+## Quick Example
 
 ```php
 use Exact\Collection\Set;
 
-$tags = Set::of('php', 'functional', 'php')
-    ->add('domain');
+$roles = Set::of('editor', 'reviewer', 'editor')
+    ->add('publisher');
+$reviewTeam = $roles->intersect(Set::of('reviewer', 'publisher'));
 
-$tags->toArray(); // ['php', 'functional', 'domain']
+$roleNames = $reviewTeam->map(static fn (string $role): string => strtoupper($role));
 ```
 
-## Combining Sets
+Repeated values are kept once. Set transformations return a `Set` and preserve insertion order.
+
+## Creating and Checking a Set
+
+Use `empty()` for no values or `of(...$values)` to build one. `contains()` uses strict comparison; `size()` counts unique values and `isEmpty()` checks for no values:
 
 ```php
-$backend = Set::of('php', 'sql');
-$shared = $backend->intersect(Set::of('php', 'redis'));
-$all = $backend->union(Set::of('redis'));
+$empty = Set::empty();
+$permissions = Set::of('read', 'write');
+$canWrite = $permissions->contains('write');
+$permissionCount = $permissions->size();
+$hasNoPermissions = $empty->isEmpty();
 ```
 
-`remove()` returns a set without the strict-equal value. `map()` transforms values and removes duplicates in the mapped result.
+## Adding, Removing, and Combining Values
+
+`add()` includes a value only if no strictly equal value exists. `remove()` drops the strictly equal value. `union()` combines values from both sets; `intersect()` keeps values present in both:
+
+```php
+$updated = $permissions->add('admin')->remove('read');
+$all = $permissions->union(Set::of('admin'));
+$shared = $permissions->intersect(Set::of('write', 'admin'));
+```
+
+`map()` transforms values and removes duplicates in its result. `toArray()` returns values in insertion order:
+
+```php
+$normalized = Set::of('READ', 'read')->map(static fn (string $role): string => strtolower($role));
+$values = $normalized->toArray(); // ['read']
+```
 
 ## Next Steps
 

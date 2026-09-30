@@ -45,10 +45,8 @@ composer require pandu/exact
 
 ## Documentation
 
-- [Usage documentation](docs/usage/)
-- [Technical documentation](docs/technical/)
-
-The documentation directories are present in the repository; detailed documentation files are not currently included.
+- [Usage documentation](docs/usage/README.md)
+- [Technical documentation](docs/technical/README.md)
 
 ## Project Status
 

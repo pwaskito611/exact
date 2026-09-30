@@ -13,10 +13,11 @@ $scaled = $coordinates->map(
 );
 
 $x = $scaled->at(0);
+$coordinateCount = $coordinates->count();
 $values = $scaled->toArray();
 ```
 
-`Tuple::at()` uses zero-based indexes and throws `OutOfBoundsException` for a missing index. `count()` returns the number of values.
+`Tuple::of()` accepts any number of values, including zero. `at()` uses zero-based indexes and throws `OutOfBoundsException` for a missing index; `count()` returns the number of values. `map()` calls its callback once per value and returns a new tuple, while `toArray()` exposes the values as a PHP array.
 
 ## Pair
 
@@ -26,10 +27,13 @@ Use `Pair` when exactly two named positions, `first` and `second`, are enough:
 use Exact\Data\Tuple\Pair;
 
 $entry = Pair::of('key', 'value');
+$key = $entry->first();
+$value = $entry->second();
 $reversed = $entry->swap();
+$parts = $reversed->toArray();
 ```
 
-Both types return new values from transformations; the original tuple or pair remains unchanged.
+`Pair::of()` always creates exactly two positions. `first()` and `second()` read them, `swap()` returns a new pair with their order reversed, and `toArray()` returns a two-item array. `Pair` cannot be constructed directly; use its factory. Neither tuples nor pairs expose mutable update operations, so these operations leave the original value unchanged.
 
 ## Next Steps
 

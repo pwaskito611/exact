@@ -18,7 +18,7 @@ $result = PatternMatch::on($payment)
         'Failed',
         static fn (array $failure): Result => Result::err($failure['code']),
     )
-    ->default(static fn (): Result => Result::err('Unknown payment state'))
+    ->default(static fn (mixed $payload, string $name): Result => Result::err("Unknown payment state: {$name}"))
     ->run();
 
 $message = $result->fold(

@@ -5,7 +5,7 @@ Exact is a PHP library that requires PHP 8.2 or later. It has no runtime depende
 Install it with Composer:
 
 ```bash
-composer require exact/exact
+composer require pandu/exact
 ```
 
 Exact uses the `Exact\` namespace. Composer loads it from the package's `src/` directory.
@@ -16,10 +16,10 @@ To work on a local checkout:
 
 ```bash
 composer install
-composer test
+vendor/bin/phpunit
 ```
 
-`composer test` runs the PHPUnit suite.
+The repository does not define a `composer test` script; run PHPUnit directly with the configured test suite.
 
 ## Next Steps
 

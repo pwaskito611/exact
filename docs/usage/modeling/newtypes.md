@@ -1,8 +1,8 @@
 # Newtypes
 
-`Newtype` wraps one value in a distinct class. It is useful when two values have the same PHP scalar type but different domain meanings.
+`Newtype` gives a single wrapped value a distinct domain type, so an identifier cannot be confused with an arbitrary string.
 
-## Basic Usage
+## Define a Domain Type
 
 ```php
 use Exact\Value\Newtype;
@@ -17,7 +17,26 @@ $rawValue = $id->value();
 $sameId = $id->equals(new UserId('user-42'));
 ```
 
-`equals()` requires the same subclass and a strictly equal wrapped value. A `UserId` is therefore not equal to another `Newtype` subclass containing the same string.
+Extend the abstract base with a `readonly` class. The inherited constructor is public; `value()` returns the wrapped value.
+
+## Compare Domain Values
+
+`equals()` accepts another `Newtype` and returns `true` only when the runtime classes match and their wrapped values are strictly identical. It does not coerce scalar types.
+
+```php
+final readonly class OrderId extends Newtype
+{
+}
+
+$sameUser = $id->equals(new UserId('user-42'));
+$sameTextDifferentType = $id->equals(new OrderId('user-42'));
+```
+
+The second comparison is `false`, even though both wrappers contain the same string.
+
+## When to Use a Newtype
+
+Use it for identifiers, codes, or another single value whose domain meaning should be visible in the type. Use a [Value Object](value-objects.md) when equality depends on several fields or custom rules.
 
 ## When to Use It
 

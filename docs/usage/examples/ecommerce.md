@@ -4,7 +4,6 @@ An order total can combine lazy input, collection transformations, and `Result` 
 
 ```php
 use Exact\Collection\LazySeq;
-use Exact\Data\Result\Result;
 
 $items = LazySeq::defer(static function (): iterable {
     yield ['name' => 'book', 'price' => 10];
@@ -14,21 +13,14 @@ $items = LazySeq::defer(static function (): iterable {
 
 $total = $items
     ->filter(static fn (array $item): bool => $item['price'] >= 5)
-    ->map(static fn (array $item): Result => Result::ok($item['price']))
+    ->map(static fn (array $item): int => $item['price'])
     ->toList()
-    ->foldLeft(
-        Result::ok(0),
-        static fn (Result $current, Result $price): Result => $current->flatMap(
-            static fn (int $amount): Result => $price->map(
-                static fn (int $value): int => $amount + $value,
-            ),
-        ),
-    );
+    ->foldLeft(0, static fn (int $amount, int $price): int => $amount + $price);
 
-$amount = $total->getOrElse(0); // 35
+$amount = $total; // 35
 ```
 
-`LazySeq` defers the source, `filter()` selects eligible items, and `Result` leaves room for a later price or stock failure without changing the collection pipeline shape.
+`LazySeq` defers reading the items, `filter()` selects the products to total, and `foldLeft()` produces the final amount. When a price check can fail, model that operation with [Result](../fundamentals/result.md) as described in [Error Handling](../patterns/error-handling.md).
 
 ## Next Steps
 

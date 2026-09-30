@@ -1,12 +1,8 @@
 # Value Objects
 
-`ValueObject` is a base abstraction for domain values whose identity is defined by their contents rather than by object identity.
+Use a value object when several fields together represent one domain value, such as a price with a currency.
 
-## When to Use It
-
-Use a value object when a combination of values has domain meaning and should define its own equality rule, such as money, an address, or a date range.
-
-## Basic Usage
+## Define a Value Object
 
 ```php
 use Exact\Value\ValueObject;
@@ -28,9 +24,16 @@ final readonly class Money extends ValueObject
 }
 
 $samePrice = (new Money(100, 'USD'))->equals(new Money(100, 'USD'));
+$differentCurrency = (new Money(100, 'USD'))->equals(new Money(100, 'EUR'));
 ```
 
-The subclass owns the equality rule. `ValueObject` requires `equals()` to accept another `ValueObject`.
+`ValueObject` requires `equals(ValueObject $other): bool`, but does not provide storage, a constructor, or automatic equality. Each concrete class defines which fields determine equality.
+
+In this example, equal amounts with different currencies are not equal. Keep the equality rule consistent with the fields that define the domain value.
+
+## When to Use a Value Object
+
+Use a value object when a type has multiple pieces of state or needs a domain-specific equality rule. Use a [Newtype](newtypes.md) for one wrapped value with a distinct meaning.
 
 ## Next Steps
 

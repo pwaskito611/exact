@@ -46,6 +46,7 @@ This section documents the architecture, semantic contracts, design principles, 
 - [Static Analysis](static-analysis.md)
 - [PHP Compatibility](php-compatibility.md)
 - [API Stability](api-stability.md)
+- [Public API Usage Documentation Audit](api-usage-audit.md)
 
 ## Architecture Decisions
 

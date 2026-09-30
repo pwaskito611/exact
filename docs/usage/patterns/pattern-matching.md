@@ -2,6 +2,8 @@
 
 Pattern matching turns a named `Variant` into a value by selecting a handler for its name.
 
+`PatternMatch::on($variant)` is the normal entry point. It returns a `Matcher`; the matcher's public constructor also accepts a `Variant` directly. `case($name, $handler)` and `default($handler)` configure it, and `run()` performs dispatch and returns the selected handler's result.
+
 ## Basic Workflow
 
 ```php
@@ -21,6 +23,19 @@ $label = PatternMatch::on($state)
 ```
 
 The matching case wins over the default. A case handler receives the variant payload. A default handler receives the payload and name.
+
+Registering the same case name again replaces its earlier handler. Likewise, calling `default()` again replaces the prior fallback. `Matcher::run()` throws `MatchException` when the active variant has no registered case and no default.
+
+`Matcher` also has a public constructor that accepts a `Variant`. `PatternMatch::on()` is the shorter static entry point for the same workflow:
+
+```php
+use Exact\Adt\Matcher;
+use Exact\Adt\Variant;
+
+$label = (new Matcher(Variant::of('Paid', 'R-204')))
+    ->case('Paid', static fn (string $receipt): string => "Paid: {$receipt}")
+    ->run();
+```
 
 ## Without a Default
 
