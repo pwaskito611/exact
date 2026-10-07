@@ -17,7 +17,7 @@ The invalid combiner is supplied by the caller. The current implementation does 
 
 ## Rationale and Trade-offs
 
-Separating `Validated` from short-circuiting `Result` expresses a different workflow: report independent validation failures together. The callback-based combination is flexible, but it means error accumulation policy is not standardized by the library.
+`Validated` represents a different workflow from right-biased `Either`: it can report independent validation failures together. The callback-based combination is flexible, but it means error accumulation policy is not standardized by the library.
 
 ## Error and Access Semantics
 
@@ -29,6 +29,6 @@ Tests should cover valid/invalid mapping, both-invalid combination, mixed propag
 
 ## Related Documents
 
-- [Result](result-design.md)
+- [Either Design](either-design.md)
 - [Error Semantics](../error-semantics.md)
 - [Composition](../composition.md)

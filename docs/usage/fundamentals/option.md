@@ -19,7 +19,7 @@ The result is `example.com`. If the input is `null` or fails the filter, the map
 
 ## When to Use It
 
-Use `Option` when absence is expected and there is no failure detail to report, such as an optional profile field or lookup. Use [Result](result.md) when the reason an operation failed matters.
+Use `Option` when absence is expected and there is no failure detail to report, such as an optional profile field or lookup. Use [Either](either.md) when a domain alternative or error payload must be preserved.
 
 ## Creating an Option
 
@@ -27,11 +27,13 @@ Use `Option` when absence is expected and there is no failure detail to report, 
 $present = Option::some('Ada');
 $missing = Option::none();
 $fromInput = Option::from($input);
+$conditional = Option::when($input !== '', $input);
+$safeResult = Option::tryCatch(static fn (): string => readDisplayName());
 ```
 
 `some()` always creates `Some`, even for `null`. `none()` creates `None`. `from()` creates `None` only for `null`; values such as `''`, `0`, and `[]` create `Some`.
 
-`Some` and `None` also have public constructors, but the factories keep callers working with the `Option` abstraction.
+`when()` creates `Some($value)` when its condition is true and `None` otherwise. `tryCatch()` wraps a successful callback result in `Some` and converts any thrown `Throwable` to `None`. `Some` and `None` also have public constructors, but the factories keep callers working with the `Option` abstraction.
 
 ## Checking for a Value
 
@@ -73,6 +75,16 @@ $validEmail = Option::from($input)
     ->filter(static fn (string $email): bool => filter_var($email, FILTER_VALIDATE_EMAIL) !== false);
 ```
 
+Use `tap()` for a side effect that should not change the option:
+
+```php
+$email = Option::from($input)->tap(
+    static function (string $value): void {
+        error_log("Found email: {$value}");
+    },
+);
+```
+
 ## Getting a Value
 
 `getOrElse()` returns the contained value or a raw default. `orElse()` returns the current `Option` when present, or the fallback `Option` when absent:
@@ -91,6 +103,56 @@ $label = Option::from($input)->fold(
 );
 ```
 
+For a lazy fallback use `getOrElseGet()`; use `getOrElseThrow()` when absence should throw:
+
+```php
+$email = Option::none()->getOrElseGet(static fn (): string => configuredEmail());
+$required = Option::from($input)->getOrElseThrow(
+    static fn (): RuntimeException => new RuntimeException('Email is required'),
+);
+```
+
+`getOrNull()` returns the payload for `Some` and `null` for `None`. Since `some(null)` is allowed, use `isSome()` when the distinction between `Some(null)` and `None` matters.
+
+## Combining Options
+
+```php
+$first = Option::firstSome([
+    Option::none(),
+    Option::some('primary@example.com'),
+    Option::some('backup@example.com'),
+]);
+
+$all = Option::sequence([Option::some('Ada'), Option::some('Grace')]);
+$traversed = Option::traverse(
+    [1, 2, 3],
+    static fn (int $number): Option => $number > 0
+        ? Option::some($number * 2)
+        : Option::none(),
+);
+$presentOnly = Option::collect([
+    Option::some('Ada'),
+    Option::none(),
+    Option::some('Grace'),
+]);
+```
+
+`firstSome()` returns the first present option. `sequence()` and `traverse()` return `None` if any input is absent; otherwise they return `Some` containing the ordered list of values. `collect()` instead drops absent values and returns a plain list.
+
+Two options can be paired or combined with a callback. `ap()` applies a function stored in the receiver to the value in the argument:
+
+```php
+$pair = Option::some('Ada')->zip(Option::some(37));
+$greeting = Option::some('Hello, ')->zipWith(
+    Option::some('Ada'),
+    static fn (string $greeting, string $name): string => $greeting . $name,
+);
+$length = Option::some(static fn (string $name): int => strlen($name))
+    ->ap(Option::some('Ada'));
+```
+
+If either side is `None`, `zip()`, `zipWith()`, and `ap()` return `None`. `flatten()` removes one nested `Option` layer.
+
 `Some::value()` is available only on the concrete `Some` type. Prefer the abstraction-level methods unless the branch has already been narrowed.
 
 ```php
@@ -102,8 +164,33 @@ $knownEmail = $some->value();
 $none = new None();
 ```
 
+## Interop and Method Reference
+
+```php
+$either = Option::none()->toEither('value is missing');
+$values = Option::some('Ada')->toArray();
+$serializedValue = json_encode(Option::some('Ada'));
+```
+
+`toEither($left)` converts `Some(value)` to `Right(value)` and `None` to `Left($left)`. An option can also be iterated: `Some` yields one item and `None` yields none.
+
+| Method | Description |
+|---|---|
+| `some()`, `none()`, `from()`, `when()`, `tryCatch()` | Construct an option from a value, condition, or callback. |
+| `isSome()`, `isNone()` | Inspect presence. |
+| `map()`, `flatMap()`, `filter()` | Transform or retain a present value. |
+| `fold()` | Handle both branches and return a value. |
+| `getOrElse()`, `getOrElseGet()`, `getOrElseThrow()`, `getOrNull()` | Extract a value or use a fallback. |
+| `orElse()`, `orElseGet()` | Provide an alternative option. |
+| `exists()`, `forall()`, `contains()`, `equals()` | Inspect or compare the value. |
+| `tap()` | Run a side effect for `Some`. |
+| `zip()`, `zipWith()`, `ap()`, `flatten()` | Combine or flatten options. |
+| `firstSome()`, `sequence()`, `traverse()`, `collect()` | Select or aggregate options. |
+| `toEither()`, `toArray()`, `getIterator()`, `jsonSerialize()` | Convert to another representation. |
+| `Some::value()`, `None::value()` | Concrete-branch extraction; `None::value()` throws `LogicException`. |
+
 ## Next Steps
 
-- Compare absence with failure in [Result](result.md).
+- Compare absence with domain alternatives in [Either](either.md).
 - See [Registration](../examples/registration.md) for an end-to-end flow.
 - Choose among Exact's outcome types in [Error Handling](../patterns/error-handling.md).

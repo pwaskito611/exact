@@ -1,6 +1,6 @@
 # E-commerce
 
-An order total can combine lazy input, collection transformations, and `Result` values without exposing collection internals to the caller.
+An order total can combine lazy input and collection transformations without exposing collection internals to the caller.
 
 ```php
 use Exact\Collection\LazySeq;
@@ -14,16 +14,16 @@ $items = LazySeq::defer(static function (): iterable {
 $total = $items
     ->filter(static fn (array $item): bool => $item['price'] >= 5)
     ->map(static fn (array $item): int => $item['price'])
-    ->toList()
+    ->toSeq()
     ->foldLeft(0, static fn (int $amount, int $price): int => $amount + $price);
 
 $amount = $total; // 35
 ```
 
-`LazySeq` defers reading the items, `filter()` selects the products to total, and `foldLeft()` produces the final amount. When a price check can fail, model that operation with [Result](../fundamentals/result.md) as described in [Error Handling](../patterns/error-handling.md).
+`LazySeq` defers reading the items, `filter()` selects the products to total, and `toSeq()` materializes the selected values as a `Vec` before `foldLeft()` produces the final amount. If a price check has a meaningful alternative, represent it with [Either](../fundamentals/either.md); use [Validated](../fundamentals/validated.md) to accumulate independent input errors.
 
 ## Next Steps
 
 - See [LazySeq](../collections/lazy-seq.md).
-- See [Vec](../collections/seq.md) for `foldLeft()`.
-- See [Error Handling](../patterns/error-handling.md) for choosing between `Option`, `Result`, and `Validated`.
+- See [Vec](../collections/vec.md) for `foldLeft()`.
+- See [Error Handling](../patterns/error-handling.md) for choosing between `Option`, `Either`, and `Validated`.

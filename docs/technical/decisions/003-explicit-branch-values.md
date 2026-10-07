@@ -6,7 +6,7 @@ Accepted as the current repository design.
 
 ## Context
 
-Exact provides separate abstractions for absence, success/error, two-sided alternatives, and validation: `Option`, `Result`, `Either`, and `Validated`.
+Exact provides separate abstractions for absence, two-sided alternatives, and validation: `Option`, `Either`, and `Validated`.
 
 ## Decision
 
@@ -19,7 +19,7 @@ Represent expected computational branches as explicit values with branch-aware t
 
 ## Decision Rationale
 
-The current types have different semantics: `Result` short-circuits errors, `Validated` can combine two invalid values, `Either` is right-biased but domain-named, and `Option` carries no error payload. Keeping them distinct preserves those contracts.
+The current types have different semantics: `Validated` can combine two invalid values, `Either` is right-biased but domain-named, and `Option` carries no error payload. Keeping them distinct preserves those contracts.
 
 ## Consequences
 

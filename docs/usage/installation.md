@@ -19,9 +19,9 @@ composer install
 vendor/bin/phpunit
 ```
 
-The repository does not define a `composer test` script; run PHPUnit directly with the configured test suite.
+Run the configured PHPUnit suite with `composer test`.
 
 ## Next Steps
 
 - Start with [Getting Started](getting-started.md).
-- Choose between [Option](fundamentals/option.md) and [Result](fundamentals/result.md).
+- Start with [Option](fundamentals/option.md), [Either](fundamentals/either.md), and [Validated](fundamentals/validated.md).

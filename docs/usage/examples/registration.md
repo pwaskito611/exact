@@ -1,18 +1,13 @@
 # Registration
 
-A registration flow often has optional input, validation, a domain identifier, and a final success or failure result.
+A registration flow often has optional input, validation, and an explicit outcome.
 
 ```php
 use Exact\Type\Option\Option;
-use Exact\Type\Result\Result;
+use Exact\Type\Either\Either;
 use Exact\Type\Validated\Validated;
-use Exact\Value\Newtype;
 
-final readonly class RegistrationUserId extends Newtype
-{
-}
-
-$id = new RegistrationUserId('user-42');
+$id = 'user-42';
 $email = Option::from('ADA@EXAMPLE.COM')
     ->map(static fn (string $value): string => strtolower($value));
 
@@ -24,15 +19,15 @@ $validatedEmail = $email->fold(
 );
 
 $registration = $validatedEmail->fold(
-    static fn (string $error): Result => Result::err($error),
-    static fn (string $value): Result => Result::ok([
+    static fn (string $error): Either => Either::left($error),
+    static fn (string $value): Either => Either::right([
         'id' => $id,
         'email' => $value,
     ]),
 );
 ```
 
-The `Option` step handles absence, `Validated` represents input validity, and `Result` gives the caller a single success/error boundary. The `Newtype` prevents a raw string from being the only representation of the user identifier.
+The `Option` step handles absence, `Validated` represents input validity, and `Either` gives the caller a typed `Left`/`Right` outcome. In a real application, the identifier can be represented by an application-owned domain class.
 
 ## Next Steps
 

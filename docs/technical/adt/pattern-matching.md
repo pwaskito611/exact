@@ -20,7 +20,7 @@ The current matcher supports exact string-name cases and one fallback handler. I
 
 ## Design Boundary
 
-Pattern matching is dispatch, not validation. If a handler must report a domain failure, it can return `Result`; if an unknown state is a programmer error, omitting the default exposes it as an exception. The choice belongs to the caller.
+Pattern matching is dispatch, not validation. A handler can return `Either`, `Option`, `Validated`, or an application value; if an unknown state is a programmer error, omitting the default exposes it as an exception. The choice belongs to the caller.
 
 ## Testing Implications
 
@@ -29,5 +29,5 @@ Tests should cover matching payloads, default payload/name arguments, precedence
 ## Related Documents
 
 - [ADT Design](adt-design.md)
-- [Result Design](../data/result-design.md)
+- [Either Design](../data/either-design.md)
 - [Error Semantics](../error-semantics.md)

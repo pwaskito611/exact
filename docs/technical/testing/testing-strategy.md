@@ -4,15 +4,15 @@ The repository uses PHPUnit and currently separates tests by the level of behavi
 
 ## Unit
 
-`tests/Unit/` covers one class or local operation at a time: branch behavior, collection operations, callable helpers, value equality, ADT dispatch, and exception construction/access.
+`tests/Unit/` covers one class or local operation at a time: branch behavior, collection operations, pattern dispatch, and exception construction/access.
 
 ## Feature
 
-`tests/Feature/` exercises a public API workflow from a user's perspective. Examples include normalizing an optional email, composing a `Result`, combining validation, processing collections, matching variants, and using function pipelines.
+`tests/Feature/` exercises a public API workflow from a user's perspective. Examples include normalizing an optional email, combining validation, processing collections, and matching variants.
 
 ## Integration
 
-`tests/Integration/` verifies interaction across abstractions. Current scenarios combine `Newtype`, `Option`, `Validated`, and `Result`; combine `LazySeq`, `Vec`, and `Result`; and turn an ADT variant into a `Result`.
+`tests/Integration/` verifies interaction across abstractions. Current scenarios combine `Option`, `Validated`, and `Either`; combine `LazySeq` and `Vec`; and process an ADT variant through pattern matching.
 
 ## Test Runner
 

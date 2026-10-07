@@ -7,7 +7,6 @@ Exact distinguishes expected computational states from invalid API operations.
 | Abstraction | Meaning | Branch behavior |
 | --- | --- | --- |
 | `Option` | Value is present or absent | No error payload is carried. |
-| `Result` | Operation succeeded or failed | `Err` carries a payload and short-circuits success transformations. |
 | `Either` | Two domain alternatives | `Right` is the transformation-biased branch; `Left` remains meaningful. |
 | `Validated` | Input is valid or invalid | Two invalid payloads can be combined by caller policy. |
 
@@ -17,7 +16,7 @@ These are values. They should be used when the condition is part of normal appli
 
 Exceptions represent operations that violate an API precondition or request an unavailable branch:
 
-- `LogicException` for wrong-branch access such as `Err::get()` or `Either::getRight()`.
+- `LogicException` for wrong-branch access such as `Either::getRight()`.
 - `InvalidArgumentException` for invalid construction or operation arguments.
 - `TypeError` when a checked `flatMap()` callback returns the wrong abstraction.
 - `OutOfBoundsException` for missing indexes.
@@ -28,7 +27,7 @@ Exceptions represent operations that violate an API precondition or request an u
 
 ## Propagation
 
-Exact does not catch arbitrary callback exceptions or native PHP errors. They propagate normally. `Result` and related values handle only the branch values explicitly created by the caller.
+Exact does not catch arbitrary callback exceptions or native PHP errors. They propagate normally. Branch-oriented values handle only the states explicitly represented by the caller.
 
 ## Design Boundary
 
@@ -36,6 +35,5 @@ The current implementation does not define a universal error hierarchy, error in
 
 ## Related Documents
 
-- [Result Design](data/result-design.md)
 - [Validated Design](data/validated-design.md)
 - [Pattern Matching](adt/pattern-matching.md)

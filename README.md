@@ -1,18 +1,18 @@
 # Exact
 
-Exact is a Scala-inspired domain modeling library for PHP. It provides explicit data types, immutable-style collections, value abstractions, and composable functional utilities.
+Exact is a PHP data-modeling library focused on Algebraic Data Types, immutable collections, and explicit pattern matching.
 
 ## Quick Introduction
 
-Exact is designed for PHP code that benefits from making domain states explicit instead of representing them only with nullable values, exceptions, or loosely structured arrays. Its data types model alternatives such as an optional value, a success or error, and a left or right branch.
+Exact helps PHP applications represent domain states explicitly instead of relying only on nullable values, exceptions, or loosely structured arrays. `Option`, `Either`, and `Validated` model distinct forms of alternatives and validation outcomes.
 
-The library focuses on type-oriented programming, immutability in its data and collection transformations, and small operations that can be combined through mapping, folding, pattern matching, and function composition.
+Its immutable collection transformations and named variants support predictable data processing and explicit case handling.
 
 ## Core Features
 
-- **Data Types** — `Option`, `Result`, `Either`, `Validated`, tuples, and pairs for explicit domain values and outcomes.
+- **Types** — `Option`, `Either`, and `Validated` for optional values, alternatives, and validation outcomes; tuples and pairs for grouped values.
 - **Algebraic Data Types** — named `Variant` values with `PatternMatch` and `Matcher` for case-based handling.
-- **Collections** — `Vec`, `NonEmptyVec`, `Map`, `Set`, and lazy `LazySeq` with transformation and conversion operations.
+- **Immutable Collections** — `Vec`, `NonEmptyVec`, `LazySeq`, `NonEmptyLazySeq`, `Range`, `Deque`, `PriorityQueue`, `Map`, `NonEmptyMap`, `SortedMap`, `BiMap`, `MultiMap`, `Set`, `NonEmptySet`, `SortedSet`, and `MultiSet`.
 
 ## Folder Architecture
 
@@ -30,7 +30,7 @@ src/
 └── Exception/   Library-specific exceptions
 ```
 
-`Type` separates domain values from their operations: for example, `Option` and `Either` make alternative states explicit, while `Validated` represents accumulated validation outcomes. `Collection` contains reusable data structures such as vectors, maps, sets, deques, and lazy sequences. `Pattern` provides the matching mechanism for handling named variants, and `Exception` keeps library errors in one place.
+`Type` contains `Option`, `Either`, `Validated`, and tuple types. `Collection` contains reusable eager and lazy data structures such as vectors, maps, sets, deques, and sequences. `Pattern` provides named variants and matching for handling domain cases, and `Exception` keeps library-specific exceptions in one place.
 
 The test tree mirrors these source areas. `tests/Unit` checks individual types and collection operations, `tests/Feature` exercises behavior across public APIs, and `tests/Integration` verifies how abstractions work together in domain and composition flows. Usage guides and design rationale are separated under `docs/usage` and `docs/technical`, respectively.
 
@@ -39,24 +39,26 @@ The test tree mirrors these source areas. `tests/Unit` checks individual types a
 ```php
 <?php
 
+use Exact\Pattern\PatternMatch;
+use Exact\Pattern\Variant;
 use Exact\Type\Either\Either;
 use Exact\Type\Option\Option;
-use Exact\Type\Result\Result;
 
 $email = Option::from('USER@example.com')
     ->map(static fn (string $value): string => strtolower($value))
     ->getOrElse('noreply@example.com');
 
-$total = Result::ok(42)
-    ->map(static fn (int $value): int => $value + 8)
-    ->getOrElse(0);
+$delivery = Either::right('courier')
+    ->map(static fn (string $method): string => strtoupper($method))
+    ->getOrElse('PICKUP');
 
-$checkout = Either::right(250)
-    ->map(static fn (int $value): int => $value + 50)
-    ->getOrElse(0);
+$label = PatternMatch::on(Variant::of('Paid', 'R-204'))
+    ->case('Paid', static fn (string $receipt): string => "Paid: {$receipt}")
+    ->default(static fn (mixed $payload, string $name): string => $name)
+    ->run();
 ```
 
-`Option::from(null)` creates `None`; a non-null value creates `Some`. `Result::map()` transforms an `Ok` value while preserving an `Err` branch. `Either` keeps a meaningful left/right alternative, which is useful when the domain distinguishes a business decision from a success path.
+`Option::from(null)` creates `None`; a non-null value creates `Some`. `Either` carries one of two meaningful alternatives. `Variant` and `PatternMatch` make named domain cases explicit and dispatch them to matching handlers.
 
 ## Installation
 
@@ -82,7 +84,7 @@ composer test
 
 ## Project Status
 
-The repository includes PHPUnit tests and is still evolving. The public API may change as the library develops, and no separate backward-compatibility or production-readiness guarantee is declared.
+The repository includes PHPUnit tests and continues to evolve. Starting with v2, the public API is intended to remain stable, and breaking changes will be avoided whenever reasonably possible. Backward compatibility will be prioritized across v2 releases, with breaking changes introduced only when necessary and clearly documented.
 
 ## License
 

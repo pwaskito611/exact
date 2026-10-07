@@ -8,10 +8,9 @@ This section documents the architecture, semantic contracts, design principles, 
 - [Design Principles](design-principles.md)
 - [Type Model](type-model.md)
 
-## Data Types
+## Types
 
 - [Option](data/option-design.md)
-- [Result](data/result-design.md)
 - [Either](data/either-design.md)
 - [Validated](data/validated-design.md)
 - [Tuples](data/tuple-design.md)
@@ -21,20 +20,13 @@ This section documents the architecture, semantic contracts, design principles, 
 - [ADT Design](adt/adt-design.md)
 - [Pattern Matching](adt/pattern-matching.md)
 
-## Value Modeling
-
-- [Value Objects](value/value-object-design.md)
-- [Newtypes](value/newtype-design.md)
-
-## Collections and Functions
+## Collections
 
 - [Collection Design](collection/collection-design.md)
-- [Composition Design](function/composition-design.md)
 
 ## Cross-Cutting Concerns
 
 - [Immutability](immutability.md)
-- [Composition](composition.md)
 - [Error Semantics](error-semantics.md)
 - [Performance](performance.md)
 

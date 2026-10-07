@@ -4,12 +4,12 @@ Exact builds domain-oriented contracts from PHP 8.2 language features. This docu
 
 ## PHP Capabilities Used
 
-- `abstract` classes define branch-oriented base contracts such as `Option`, `Result`, `Validated`, and `ValueObject`.
-- `final` classes close concrete implementations such as `Some`, `None`, `Ok`, `Err`, `Variant`, and the collections.
+- `abstract` classes define branch-oriented contracts such as `Option`, `Either`, and `Validated`.
+- `final` classes close concrete implementations such as `Some`, `None`, `Variant`, and the collections.
 - `readonly` classes and readonly properties protect object properties from reassignment after construction.
 - Union types are used for APIs such as `Map` keys (`string|int`).
 - `mixed` is used where the library intentionally supports arbitrary payloads.
-- `never` is used by accessors that always throw, such as `Ok::error()` and `Err::get()`.
+- `never` is used by accessors that always throw.
 - PHPDoc describes array and callable shapes, but these annotations are not enforced by the PHP runtime.
 
 The source contains no interfaces or enums, and no generic type parameters. It also does not use intersection types or reflection-based type registration.
@@ -20,7 +20,6 @@ The branch classes encode state in the concrete runtime class or internal branch
 
 ```text
 Option    -> Some | None
-Result    -> Ok | Err
 Validated -> Valid | Invalid
 Either    -> Left | Right state inside Either
 ```
@@ -29,16 +28,16 @@ Either    -> Left | Right state inside Either
 
 ## Type Narrowing
 
-Methods such as `isOk()`, `isSome()`, `isLeft()`, and `isValid()` communicate branch state to callers at runtime. `fold()` is the primary branch-elimination operation because it requires handlers for both branches and returns one final value.
+Methods such as `isSome()`, `isLeft()`, and `isValid()` communicate branch state to callers at runtime. `fold()` is the primary branch-elimination operation because it requires handlers for both branches and returns one final value.
 
-`flatMap()` adds a runtime contract: its callback must return the same abstraction. `Result`, `Either`, and `Vec` explicitly throw `TypeError` for invalid return values; `Option::flatMap()` relies on the declared return type and callback behavior.
+`flatMap()` adds a runtime contract: its callback must return the same abstraction. `Either` and `Vec` explicitly throw `TypeError` for invalid return values; `Option::flatMap()` relies on the declared return type and callback behavior.
 
 ## Limits
 
-PHP's runtime does not track the value types inside `mixed` payloads. The current project has no configured PHPStan, Psalm, or other static-analysis gate, so generic-looking relationships such as `Result<T, E>` are conceptual documentation notation, not enforced source-level generics.
+PHP's runtime does not track the value types inside `mixed` payloads. The current project has no configured PHPStan, Psalm, or other static-analysis gate, so generic-looking relationships are conceptual documentation notation, not enforced source-level generics.
 
 ## Related Documents
 
-- [Data Type Design](data/option-design.md)
+- [Type Design](data/option-design.md)
 - [ADT Design](adt/adt-design.md)
 - [PHP Compatibility](php-compatibility.md)

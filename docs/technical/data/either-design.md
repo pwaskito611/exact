@@ -14,16 +14,16 @@
 
 ## Rationale and Trade-offs
 
-Right bias makes `Either` convenient for a primary successful path while preserving a domain-specific left alternative. Unlike `Result`, the names do not intrinsically mean error and success; the application gives them meaning.
+Right bias makes `Either` convenient for a primary path while preserving a domain-specific left alternative. The branch names do not intrinsically mean error and success; the application gives them meaning.
 
 The branch is runtime state. There are no separate public `Left` and `Right` classes and no static exhaustiveness check.
 
 ## Testing Implications
 
-Tests should verify right-biased mapping, left mapping, short-circuiting, branch access, folding, and swapping. Integration use is appropriate when a domain genuinely needs two named alternatives rather than generic success/error.
+Tests should verify right-biased mapping, left mapping, short-circuiting, branch access, folding, and swapping. Integration use is appropriate when a domain genuinely needs two named alternatives rather than a single undifferentiated outcome.
 
 ## Related Documents
 
-- [Result](result-design.md)
+- [Option Design](option-design.md)
 - [ADT Design](../adt/adt-design.md)
 - [Error Semantics](../error-semantics.md)

@@ -24,7 +24,7 @@ Option<T>
 
 ## Contract and Rationale
 
-Branch-specific operations make absence explicit and keep optional workflows from spreading nullable checks. `Option` carries no error reason; that is the boundary where [Result](result-design.md) becomes more appropriate.
+Branch-specific operations make absence explicit and keep optional workflows from spreading nullable checks. `Option` carries no error reason; use [Either](either-design.md) when the caller must retain a meaningful alternative or reason.
 
 `flatMap()` is intended to receive another `Option`. The abstract signature expresses this return type, but `Some` delegates directly to the callback, so runtime misuse is not normalized by a custom check.
 
@@ -34,6 +34,6 @@ Tests should cover null versus non-null construction, inactive callbacks, fallba
 
 ## Related Documents
 
-- [Result](result-design.md)
+- [Either](either-design.md)
 - [Error Semantics](../error-semantics.md)
 - [Immutability](../immutability.md)

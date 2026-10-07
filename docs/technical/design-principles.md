@@ -4,7 +4,7 @@ These principles describe patterns visible in the current implementation. They a
 
 ## Explicitness
 
-`Option`, `Result`, `Either`, `Validated`, and `Variant` make important states visible in the value being passed around. A caller can select a branch with `fold()`, inspect a branch, or continue a branch-specific transformation.
+`Option`, `Either`, `Validated`, and `Variant` make important states visible in the value being passed around. A caller can select a branch with `fold()`, inspect a branch, or continue a branch-specific transformation.
 
 The trade-off is additional wrapping and explicit unwrapping compared with raw nullable values or exceptions.
 
@@ -16,7 +16,7 @@ This is shallow rather than a claim of deep immutability: objects stored inside 
 
 ## Composition
 
-The abstractions expose common transformation operations and callable-based functions. `Option`, `Either`, `Result`, and `Validated` selectively execute callbacks according to branch state; `Composition`, `Pipe`, and collections compose ordinary callables.
+The abstractions expose transformation operations on their own values. `Option`, `Either`, and `Validated` selectively execute callbacks according to branch state; collections transform and combine their elements. Application code can use ordinary PHP callables to orchestrate these operations.
 
 Composition improves reuse, but callback type contracts remain PHP callable contracts. Exact does not provide a separate compile-time generic type system.
 

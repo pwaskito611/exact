@@ -4,10 +4,10 @@
 
 Exact favors shallow, value-returning immutability:
 
-- `Option`, `Result`, `Variant`, `Vec`, `NonEmptyVec`, `Map`, `Set`, `Newtype`, and `ValueObject` are readonly classes.
-- `Either`, `Tuple`, `Pair`, `Pipe`, and `LazySeq` use readonly properties even though their classes are not all declared readonly.
+- `Option`, `Validated`, `Variant`, `Vec`, `NonEmptyVec`, `Map`, `Set`, and other collection types are readonly classes where their implementation permits.
+- `Either`, `Tuple`, `Pair`, and `LazySeq` use readonly properties even though their classes are not all declared readonly.
 - Transformations generally construct and return a new value.
-- No-op branches may return the same instance, such as `None::map()`, `Err::map()`, or adding an existing value to `Set`.
+- No-op branches may return the same instance, such as `None::map()` or adding an existing value to `Set`.
 
 `Matcher` is mutable during construction: `case()` and `default()` update its handler registry. This is a deliberate builder boundary rather than a data-value transformation.
 

@@ -2,7 +2,7 @@
 
 ## What is Exact?
 
-Exact provides small PHP types for representing domain states explicitly. Instead of passing a nullable value or an unstructured error through several functions, you can use `Option`, `Result`, and related types and transform them with a consistent API.
+Exact is a PHP data-modeling library focused on Algebraic Data Types, immutable collections, and explicit pattern matching. Its types help represent domain states and alternatives directly in PHP values.
 
 ## A Simple Example
 
@@ -10,26 +10,31 @@ Exact provides small PHP types for representing domain states explicitly. Instea
 <?php
 
 use Exact\Type\Option\Option;
-use Exact\Type\Result\Result;
+use Exact\Type\Either\Either;
+use Exact\Pattern\PatternMatch;
+use Exact\Pattern\Variant;
 
 $email = Option::from('USER@example.com')
     ->map(static fn (string $value): string => strtolower($value))
     ->getOrElse('noreply@example.com');
 
-$total = Result::ok(42)
+$choice = Either::right(42)
     ->map(static fn (int $value): int => $value + 8)
     ->getOrElse(0);
+
+$label = PatternMatch::on(Variant::of('Paid', 'R-204'))
+    ->case('Paid', static fn (string $receipt): string => "Paid: {$receipt}")
+    ->default(static fn (mixed $payload, string $name): string => $name)
+    ->run();
 ```
 
-The final values are `user@example.com` and `50`.
+The example normalizes an optional email, transforms the `Right` branch of an `Either`, and handles a named `Paid` variant explicitly.
 
 ## Understanding the Example
 
 `Option::from()` turns `null` into `None` and every other value into `Some`. `map()` transforms the contained value only when it exists. `getOrElse()` extracts the value or supplies a fallback.
 
-`Result::ok()` creates a successful result. An `Ok` value is transformed by `map()`, while an `Err` value passes through unchanged. Use `Result::err()` when the failure information matters.
-
-## Using Option
+## Using Option and Either
 
 Use `Option` when absence is expected and you do not need to explain why a value is absent:
 
@@ -41,22 +46,7 @@ $displayName = Option::from($userName)
 
 See [Option](fundamentals/option.md) for chaining and branching operations.
 
-## Using Result
-
-Use `Result` when an operation can fail and the error value should travel with the result:
-
-```php
-$message = Result::ok(10)
-    ->map(static fn (int $value): int => $value * 2)
-    ->fold(
-        static fn (mixed $error): string => "Failed: {$error}",
-        static fn (int $value): string => "Value: {$value}",
-    );
-```
-
-See [Result](fundamentals/result.md) and [Error Handling](patterns/error-handling.md).
-
-## Composing Operations
+Use `Either` when both alternatives carry domain meaning. See [Either](fundamentals/either.md).
 
 Most Exact transformations return a new value, so workflows can be chained:
 
@@ -67,10 +57,10 @@ $value = Option::some(5)
     ->getOrElse(0);
 ```
 
-For workflows that cross several types, continue with [Domain Modeling](patterns/domain-modeling.md) and [Composition](functional/composition.md).
+For workflows that cross several types, continue with [Domain Modeling](patterns/domain-modeling.md).
 
 ## Where to Go Next
 
-- [Either](fundamentals/either.md) for two-sided outcomes.
+- [Either](fundamentals/either.md) for two-sided domain alternatives.
 - [Validated](fundamentals/validated.md) for combining validation results.
 - [Collections Overview](collections/overview.md) for immutable-style collection transformations.

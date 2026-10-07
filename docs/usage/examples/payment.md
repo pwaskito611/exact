@@ -1,24 +1,24 @@
 # Payment
 
-Payment states are a natural fit for named variants. Pattern matching can convert each state into a `Result` for the rest of the workflow.
+Payment states are a natural fit for named variants. Pattern matching can convert each state into an `Either` for the rest of the workflow.
 
 ```php
 use Exact\Pattern\PatternMatch;
 use Exact\Pattern\Variant;
-use Exact\Type\Result\Result;
+use Exact\Type\Either\Either;
 
 $payment = Variant::of('Failed', ['code' => 'DECLINED']);
 
 $result = PatternMatch::on($payment)
     ->case(
         'Paid',
-        static fn (array $receipt): Result => Result::ok($receipt['id']),
+        static fn (array $receipt): Either => Either::right($receipt['id']),
     )
     ->case(
         'Failed',
-        static fn (array $failure): Result => Result::err($failure['code']),
+        static fn (array $failure): Either => Either::left($failure['code']),
     )
-    ->default(static fn (mixed $payload, string $name): Result => Result::err("Unknown payment state: {$name}"))
+    ->default(static fn (mixed $payload, string $name): Either => Either::left("Unknown payment state: {$name}"))
     ->run();
 
 $message = $result->fold(
@@ -27,9 +27,9 @@ $message = $result->fold(
 );
 ```
 
-The variant expresses the state; `Result` expresses the outcome of continuing with the payment workflow. These are related but distinct responsibilities.
+The variant expresses the state; `Either` expresses the outcome of continuing with the payment workflow. The `Left` and `Right` branches carry domain-specific meaning.
 
 ## Next Steps
 
 - Learn [Pattern Matching](../patterns/pattern-matching.md).
-- Review [Result](../fundamentals/result.md) for sequential failure handling.
+- Review [Either](../fundamentals/either.md) for working with the resulting alternatives.

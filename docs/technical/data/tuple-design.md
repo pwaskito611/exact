@@ -12,7 +12,7 @@
 
 ## Rationale and Trade-offs
 
-Tuples are useful for small intermediate values without naming a domain class. They do not provide named fields or custom equality semantics, so a [Value Object](../value/value-object-design.md) is the stronger boundary when a value has domain meaning.
+Tuples are useful for small intermediate values without naming a domain class. They do not provide named fields or custom equality semantics, so define an application-owned domain class when a value needs those domain-specific properties.
 
 ## Testing Implications
 
