@@ -57,5 +57,5 @@ $withoutPen = $prices->remove('pen');
 
 ## Next Steps
 
-- Use [Seq](seq.md) for ordered values without keys.
+- Use [Vec](seq.md) for ordered values without keys.
 - Use [Set](set.md) when uniqueness matters more than keys.

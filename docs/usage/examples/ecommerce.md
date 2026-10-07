@@ -25,5 +25,5 @@ $amount = $total; // 35
 ## Next Steps
 
 - See [LazySeq](../collections/lazy-seq.md).
-- See [Seq](../collections/seq.md) for `foldLeft()`.
+- See [Vec](../collections/seq.md) for `foldLeft()`.
 - See [Error Handling](../patterns/error-handling.md) for choosing between `Option`, `Result`, and `Validated`.

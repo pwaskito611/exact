@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```php
-use Exact\Data\Result\Result;
+use Exact\Type\Result\Result;
 
 $message = Result::ok(2500)
     ->flatMap(static fn (int $cents): Result => $cents > 0
@@ -28,8 +28,8 @@ Use `Result` when an operation can fail and callers need the failure value, such
 ## Creating a Result
 
 ```php
-use Exact\Data\Result\Err;
-use Exact\Data\Result\Ok;
+use Exact\Type\Result\Err;
+use Exact\Type\Result\Ok;
 
 $success = Result::ok('R-204');
 $failure = Result::err('Payment was declined');

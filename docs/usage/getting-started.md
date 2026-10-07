@@ -9,8 +9,8 @@ Exact provides small PHP types for representing domain states explicitly. Instea
 ```php
 <?php
 
-use Exact\Data\Option\Option;
-use Exact\Data\Result\Result;
+use Exact\Type\Option\Option;
+use Exact\Type\Result\Result;
 
 $email = Option::from('USER@example.com')
     ->map(static fn (string $value): string => strtolower($value))

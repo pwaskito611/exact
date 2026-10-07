@@ -7,9 +7,9 @@ Exact is useful when a domain workflow has explicit states, typed values, and op
 The following flow gives an identifier its own type, validates input, and turns the validated value into a `Result`:
 
 ```php
-use Exact\Data\Option\Option;
-use Exact\Data\Result\Result;
-use Exact\Data\Validated\Validated;
+use Exact\Type\Option\Option;
+use Exact\Type\Result\Result;
+use Exact\Type\Validated\Validated;
 use Exact\Value\Newtype;
 
 final readonly class UserId extends Newtype

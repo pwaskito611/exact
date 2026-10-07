@@ -24,8 +24,8 @@ Learn how to use Exact to build explicit, composable, and type-oriented PHP appl
 ## Collections
 
 - [Collections Overview](collections/overview.md)
-- [Seq](collections/seq.md)
-- [NonEmptySeq](collections/non-empty-seq.md)
+- [Vec](collections/seq.md)
+- [NonEmptyVec](collections/non-empty-seq.md)
 - [Map](collections/map.md)
 - [Set](collections/set.md)
 - [LazySeq](collections/lazy-seq.md)

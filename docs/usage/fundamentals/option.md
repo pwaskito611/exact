@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```php
-use Exact\Data\Option\Option;
+use Exact\Type\Option\Option;
 
 $input = 'ADA@example.com';
 $domain = Option::from($input)
@@ -94,8 +94,8 @@ $label = Option::from($input)->fold(
 `Some::value()` is available only on the concrete `Some` type. Prefer the abstraction-level methods unless the branch has already been narrowed.
 
 ```php
-use Exact\Data\Option\Some;
-use Exact\Data\Option\None;
+use Exact\Type\Option\Some;
+use Exact\Type\Option\None;
 
 $some = new Some('ada@example.com');
 $knownEmail = $some->value();

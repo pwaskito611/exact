@@ -22,7 +22,7 @@ $firstThreeEvenSquares = $numbers
     ->toList();
 ```
 
-The result is a `Seq` containing `[4, 16, 36]`. `map()`, `filter()`, and `take()` create another lazy pipeline; `toList()` consumes it. `take()` stops requesting source values when it has enough. A negative count throws `InvalidArgumentException`.
+The result is a `Vec` containing `[4, 16, 36]`. `map()`, `filter()`, and `take()` create another lazy pipeline; `toList()` consumes it. `take()` stops requesting source values when it has enough. A negative count throws `InvalidArgumentException`.
 
 ## Creating from an Iterable
 
@@ -35,7 +35,7 @@ $lazy = LazySeq::from([1, 2, 3]);
 $values = $lazy->toList()->toArray();
 ```
 
-Every `toList()` requests the source again. A `defer()` factory can return a fresh generator each time; an iterable passed to `from()` may be one-shot, such as an already-started `Generator`. `take(0)` returns an empty `Seq` without requesting source values.
+Every `toList()` requests the source again. A `defer()` factory can return a fresh generator each time; an iterable passed to `from()` may be one-shot, such as an already-started `Generator`. `take(0)` returns an empty `Vec` without requesting source values.
 
 ## Next Steps
 

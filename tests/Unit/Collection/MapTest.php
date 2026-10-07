@@ -68,11 +68,11 @@ final class MapTest extends TestCase
         self::assertSame('Pandu', $map->get('name'));
     }
 
-    public function testGetReturnsNullForMissingKey(): void
+    public function testGetOrNullReturnsNullForMissingKey(): void
     {
         $map = Map::empty();
 
-        self::assertNull($map->get('missing'));
+        self::assertNull($map->getOrNull('missing'));
     }
 
     public function testGetOrElseReturnsFallback(): void

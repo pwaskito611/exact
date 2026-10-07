@@ -15,6 +15,7 @@ final class SetTest extends TestCase
 
         self::assertTrue($set->isEmpty());
         self::assertSame(0, $set->size());
+        self::assertSame(0, $set->count());
     }
 
     public function testOfRemovesDuplicates(): void
@@ -91,6 +92,50 @@ final class SetTest extends TestCase
         );
     }
 
+    public function testDifferenceReturnsRelativeComplement(): void
+    {
+        $left = Set::of(1, 2, 3, 4);
+        $right = Set::of(2, 4);
+
+        self::assertSame(
+            [1, 3],
+            $left->difference($right)->toArray(),
+        );
+    }
+
+    public function testSymmetricDifferenceReturnsExclusiveUnion(): void
+    {
+        $left = Set::of(1, 2, 3);
+        $right = Set::of(2, 3, 4);
+
+        self::assertSame(
+            [1, 4],
+            $left->symmetricDifference($right)->toArray(),
+        );
+    }
+
+    public function testRelationChecksWork(): void
+    {
+        $left = Set::of(1, 2, 3);
+        $right = Set::of(2, 3);
+        $shared = Set::of(3, 5);
+        $disjoint = Set::of(4, 5);
+
+        self::assertTrue($right->isSubsetOf($left));
+        self::assertTrue($left->isSupersetOf($right));
+        self::assertFalse($left->isDisjoint($shared));
+        self::assertTrue($left->isDisjoint($disjoint));
+    }
+
+    public function testEqualsComparesSetContentsIgnoringOrder(): void
+    {
+        $left = Set::of(1, 2, 3);
+        $right = Set::of(3, 1, 2);
+
+        self::assertTrue($left->equals($right));
+        self::assertFalse($left->equals(Set::of(1, 2, 4)));
+    }
+
     public function testMapTransformsValues(): void
     {
         $set = Set::of(1, 2, 3);
@@ -105,6 +150,39 @@ final class SetTest extends TestCase
         );
     }
 
+    public function testFilterRemovesNonMatchingValues(): void
+    {
+        $set = Set::of(1, 2, 3, 4);
+
+        $filtered = $set->filter(
+            static fn (int $value): bool => $value % 2 === 0,
+        );
+
+        self::assertSame([2, 4], $filtered->toArray());
+    }
+
+    public function testFoldAggregatesValues(): void
+    {
+        $set = Set::of(1, 2, 3);
+
+        $sum = $set->fold(0, static fn (int $carry, int $value): int => $carry + $value);
+
+        self::assertSame(6, $sum);
+    }
+
+    public function testTapPreservesSetAndRunsSideEffect(): void
+    {
+        $set = Set::of(1, 2, 3);
+        $seen = [];
+
+        $result = $set->tap(static function (int $value) use (&$seen): void {
+            $seen[] = $value;
+        });
+
+        self::assertSame($set, $result);
+        self::assertSame([1, 2, 3], $seen);
+    }
+
     public function testMapMaintainsUniqueness(): void
     {
         $set = Set::of(1, 2, 3);
@@ -114,6 +192,13 @@ final class SetTest extends TestCase
         );
 
         self::assertSame(['same'], $result->toArray());
+    }
+
+    public function testJsonSerializationUsesListRepresentation(): void
+    {
+        $set = Set::of(1, 2, 3);
+
+        self::assertSame([1, 2, 3], $set->jsonSerialize());
     }
 
     public function testOperationsDoNotMutateOriginalSet(): void

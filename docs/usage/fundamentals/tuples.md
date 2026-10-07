@@ -5,7 +5,7 @@
 ## Tuple
 
 ```php
-use Exact\Data\Tuple\Tuple;
+use Exact\Type\Tuple\Tuple;
 
 $coordinates = Tuple::of(10, 20);
 $scaled = $coordinates->map(
@@ -24,7 +24,7 @@ $values = $scaled->toArray();
 Use `Pair` when exactly two named positions, `first` and `second`, are enough:
 
 ```php
-use Exact\Data\Tuple\Pair;
+use Exact\Type\Tuple\Pair;
 
 $entry = Pair::of('key', 'value');
 $key = $entry->first();

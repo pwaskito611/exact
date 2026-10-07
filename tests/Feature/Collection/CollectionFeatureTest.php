@@ -6,8 +6,8 @@ namespace Exact\Tests\Feature\Collection;
 
 use Exact\Collection\LazySeq;
 use Exact\Collection\Map;
-use Exact\Collection\NonEmptySeq;
-use Exact\Collection\Seq;
+use Exact\Collection\NonEmptyVec;
+use Exact\Collection\Vec;
 use Exact\Collection\Set;
 use PHPUnit\Framework\TestCase;
 
@@ -15,7 +15,7 @@ final class CollectionFeatureTest extends TestCase
 {
     public function test_it_processes_eager_collections_without_mutating_inputs(): void
     {
-        $numbers = Seq::of(1, 2, 3, 4);
+        $numbers = Vec::of(1, 2, 3, 4);
         $evenSquares = $numbers
             ->filter(static fn (int $number): bool => $number % 2 === 0)
             ->map(static fn (int $number): int => $number ** 2);
@@ -44,8 +44,8 @@ final class CollectionFeatureTest extends TestCase
             ->filter(static fn (int $number): bool => $number % 2 === 0)
             ->map(static fn (int $number): int => $number * 10)
             ->take(3)
-            ->toList();
-        $nonEmpty = NonEmptySeq::of('first', 'second')->append('third');
+            ->toSeq();
+        $nonEmpty = NonEmptyVec::of('first', 'second')->append('third');
 
         self::assertSame([20, 40, 60], $result->toArray());
         self::assertSame(6, $evaluated);

@@ -21,7 +21,7 @@ Exceptions represent operations that violate an API precondition or request an u
 - `InvalidArgumentException` for invalid construction or operation arguments.
 - `TypeError` when a checked `flatMap()` callback returns the wrong abstraction.
 - `OutOfBoundsException` for missing indexes.
-- `EmptyCollectionException` for `Seq::head()` or `tail()` on empty input.
+- `EmptyCollectionException` for `Vec::head()` or `tail()` on empty input.
 - `MatchException` for an unmatched `Matcher` without a default.
 
 `InvalidStateException` exists as a runtime exception type but is not thrown by current production code.

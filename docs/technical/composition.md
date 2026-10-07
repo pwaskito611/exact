@@ -18,7 +18,7 @@ This explicit boundary prevents an implicit global error model, but it means dom
 
 ## Architectural Relationship
 
-The modules communicate through values and callables rather than shared mutable services. A `Newtype` can be carried by `Result`, a `Result` can be stored in `Seq`, and a `Variant` handler can return a `Result` without coupling the underlying modules.
+The modules communicate through values and callables rather than shared mutable services. A `Newtype` can be carried by `Result`, a `Result` can be stored in `Vec`, and a `Variant` handler can return a `Result` without coupling the underlying modules.
 
 ## Related Documents
 

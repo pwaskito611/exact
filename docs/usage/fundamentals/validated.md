@@ -5,7 +5,7 @@
 ## Quick Example
 
 ```php
-use Exact\Data\Validated\Validated;
+use Exact\Type\Validated\Validated;
 
 $issues = Validated::invalid(['name' => 'Required'])->combine(
     Validated::invalid(['email' => 'Invalid address']),

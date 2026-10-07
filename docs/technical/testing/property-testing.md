@@ -11,7 +11,7 @@ The suite checks concrete invariants such as strict set uniqueness, non-empty se
 If property testing is introduced, candidate properties include:
 
 - mapping preserves sequence order;
-- `NonEmptySeq::map()` remains non-empty;
+- `NonEmptyVec::map()` remains non-empty;
 - `Set` output contains no strict duplicates;
 - inactive data branches do not invoke callbacks;
 - eager transformations leave the original value unchanged.

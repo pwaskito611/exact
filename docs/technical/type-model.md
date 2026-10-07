@@ -31,7 +31,7 @@ Either    -> Left | Right state inside Either
 
 Methods such as `isOk()`, `isSome()`, `isLeft()`, and `isValid()` communicate branch state to callers at runtime. `fold()` is the primary branch-elimination operation because it requires handlers for both branches and returns one final value.
 
-`flatMap()` adds a runtime contract: its callback must return the same abstraction. `Result`, `Either`, and `Seq` explicitly throw `TypeError` for invalid return values; `Option::flatMap()` relies on the declared return type and callback behavior.
+`flatMap()` adds a runtime contract: its callback must return the same abstraction. `Result`, `Either`, and `Vec` explicitly throw `TypeError` for invalid return values; `Option::flatMap()` relies on the declared return type and callback behavior.
 
 ## Limits
 

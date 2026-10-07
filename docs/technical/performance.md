@@ -4,11 +4,11 @@ No benchmark suite, complexity contract, or memory budget is present in the repo
 
 ## Eager Allocation
 
-Eager collection transformations build PHP arrays and new collection objects. `Seq::flatMap()`, `Map::map()`, `Set` operations, and mapping/filtering therefore allocate result storage. Data transformations also commonly create new branch objects.
+Eager collection transformations build PHP arrays and new collection objects. `Vec::flatMap()`, `Map::map()`, `Set` operations, and mapping/filtering therefore allocate result storage. Data transformations also commonly create new branch objects.
 
 ## Lazy Evaluation
 
-`LazySeq` uses generators and deferred closures. `filter()`, `map()`, and `take()` do not consume the source until `toList()` or another consuming operation is reached. `take()` can stop source evaluation early. `toList()` materializes the consumed values into a `Seq`.
+`LazySeq` uses generators and deferred closures. `filter()`, `map()`, and `take()` do not consume the source until `toList()` or another consuming operation is reached. `take()` can stop source evaluation early. `toList()` materializes the consumed values into a `Vec`.
 
 Lazy sequences are not memoized. A source callable may run again on another consumption, while a one-shot generator may not be reusable; this behavior has no formal repeatability guarantee.
 

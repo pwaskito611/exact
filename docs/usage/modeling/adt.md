@@ -5,8 +5,8 @@ Use `Variant` for a named domain state and `PatternMatch` to choose what to do f
 ## Handle a State
 
 ```php
-use Exact\Adt\PatternMatch;
-use Exact\Adt\Variant;
+use Exact\Pattern\PatternMatch;
+use Exact\Pattern\Variant;
 
 $payment = Variant::of('Paid', ['receipt' => 'R-100']);
 

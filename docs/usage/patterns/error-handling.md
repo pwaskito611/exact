@@ -14,7 +14,7 @@ Exact gives different names to different kinds of failure. Choosing the right ty
 Use `flatMap()` for steps where the next operation may fail:
 
 ```php
-use Exact\Data\Result\Result;
+use Exact\Type\Result\Result;
 
 $message = Result::ok(10)
     ->flatMap(static fn (int $value): Result => $value > 0

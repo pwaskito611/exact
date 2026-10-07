@@ -4,19 +4,18 @@ declare(strict_types=1);
 
 namespace Exact\Tests\Integration\DomainModeling;
 
-use Exact\Data\Option\Option;
-use Exact\Data\Result\Result;
-use Exact\Data\Validated\Validated;
-use Exact\Value\Newtype;
+use Exact\Type\Either\Either;
+use Exact\Type\Option\Option;
+use Exact\Type\Validated\Validated;
 use PHPUnit\Framework\TestCase;
 
 final class RegistrationFlowTest extends TestCase
 {
     public function test_it_validates_optional_input_before_creating_a_domain_result(): void
     {
-        $userId = new RegistrationUserId('user-42');
         $email = Option::from('ADA@EXAMPLE.COM')
             ->map(static fn (string $value): string => strtolower($value));
+
         $validatedEmail = $email->fold(
             static fn (): Validated => Validated::invalid('email is required'),
             static fn (string $value): Validated => str_contains($value, '@')
@@ -24,23 +23,16 @@ final class RegistrationFlowTest extends TestCase
                 : Validated::invalid('email is invalid'),
         );
 
-        $registration = $validatedEmail->map(
-            static fn (string $value): array => [
-                'id' => $userId,
+        $result = $validatedEmail->fold(
+            static fn (string $error): Either => Either::left($error),
+            static fn (string $value): Either => Either::right([
                 'email' => $value,
-            ],
-        );
-        $result = $registration->fold(
-            static fn (string $error): Result => Result::err($error),
-            static fn (array $user): Result => Result::ok($user),
+                'status' => 'ready',
+            ]),
         );
 
-        self::assertTrue($result->isOk());
-        self::assertSame('user-42', $result->get()['id']->value());
-        self::assertSame('ada@example.com', $result->get()['email']);
+        self::assertTrue($result->isRight());
+        self::assertSame('ada@example.com', $result->getRight()['email']);
+        self::assertSame('ready', $result->getRight()['status']);
     }
-}
-
-final readonly class RegistrationUserId extends Newtype
-{
 }

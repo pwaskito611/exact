@@ -1,13 +1,13 @@
-# Seq
+# Vec
 
-`Seq` is an ordered collection that can be empty.
+`Vec` is an ordered collection that can be empty.
 
 ## Quick Example
 
 ```php
-use Exact\Collection\Seq;
+use Exact\Collection\Vec;
 
-$featuredProducts = Seq::of('book', 'pen', 'bag')
+$featuredProducts = Vec::of('book', 'pen', 'bag')
     ->filter(static fn (string $product): bool => str_starts_with($product, 'b'))
     ->map(static fn (string $product): string => strtoupper($product))
     ->append('NOTEBOOK');
@@ -15,25 +15,25 @@ $featuredProducts = Seq::of('book', 'pen', 'bag')
 $products = $featuredProducts->toArray(); // ['BOOK', 'BAG', 'NOTEBOOK']
 ```
 
-Each transformation returns a new `Seq`; the input remains unchanged.
+Each transformation returns a new `Vec`; the input remains unchanged.
 
 ## Creating a Sequence
 
 Use `empty()` for no items, `of(...$items)` for individual values, or `fromArray($items)` for an existing array. The factories normalize indexes to a zero-based sequence:
 
 ```php
-$empty = Seq::empty();
-$catalog = Seq::fromArray(['book', 'pen']);
+$empty = Vec::empty();
+$catalog = Vec::fromArray(['book', 'pen']);
 ```
 
 ## Checking and Reading Items
 
-`isEmpty()`, `isNotEmpty()`, and `size()` describe the collection. `head()` reads the first item, `tail()` returns the remaining `Seq`, and `get()` reads a zero-based index:
+`isEmpty()`, `isNotEmpty()`, and `size()` describe the collection. `head()` reads the first item, `tail()` returns the remaining `Vec`, and `get()` reads a zero-based index:
 
 ```php
-$products = Seq::of('book', 'pen');
+$products = Vec::of('book', 'pen');
 $hasProducts = $products->isNotEmpty();
-$isEmpty = Seq::empty()->isEmpty();
+$isEmpty = Vec::empty()->isEmpty();
 $count = $products->size();
 $first = $products->head();
 $rest = $products->tail();
@@ -53,15 +53,15 @@ $products->each(static function (string $product): void {
 
 ## Transforming and Reducing
 
-`map()` transforms each item; `filter()` keeps items whose predicate returns `true`. `flatMap()` combines the `Seq` returned for each item:
+`map()` transforms each item; `filter()` keeps items whose predicate returns `true`. `flatMap()` combines the `Vec` returned for each item:
 
 ```php
-$expanded = Seq::of('book', 'pen')->flatMap(
-    static fn (string $product): Seq => Seq::of($product, "gift-{$product}"),
+$expanded = Vec::of('book', 'pen')->flatMap(
+    static fn (string $product): Vec => Vec::of($product, "gift-{$product}"),
 );
 ```
 
-The `flatMap()` callback must return a `Seq`, or the call throws `TypeError`. Use `foldLeft()` to reduce items to one result:
+The `flatMap()` callback must return a `Vec`, or the call throws `TypeError`. Use `foldLeft()` to reduce items to one result:
 
 ```php
 $label = $products->foldLeft(
@@ -72,15 +72,15 @@ $label = $products->foldLeft(
 
 ## Adding Items
 
-`append()` adds to the end and `prepend()` adds to the start. Both return a new `Seq`; `toArray()` returns its values as a zero-based PHP array:
+`append()` adds to the end and `prepend()` adds to the start. Both return a new `Vec`; `toArray()` returns its values as a zero-based PHP array:
 
 ```php
-$original = Seq::of('pen');
+$original = Vec::of('pen');
 $updated = $original->prepend('book')->append('bag');
 ```
 
 ## Next Steps
 
-- Use [NonEmptySeq](non-empty-seq.md) when emptiness is not valid.
+- Use [NonEmptyVec](non-empty-seq.md) when emptiness is not valid.
 - Use [LazySeq](lazy-seq.md) for deferred input.
 - Use [Function Composition](../functional/composition.md) for reusable transformations.

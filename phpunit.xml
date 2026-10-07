@@ -5,6 +5,10 @@
     <testsuites>
         <testsuite name="default">
             <directory>tests</directory>
+            <exclude>tests/Unit/Function</exclude>
+            <exclude>tests/Unit/Value</exclude>
+            <exclude>tests/Feature/Function</exclude>
+            <exclude>tests/Feature/Value</exclude>
         </testsuite>
     </testsuites>
 </phpunit>

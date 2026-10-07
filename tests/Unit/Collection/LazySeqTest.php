@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Exact\Tests\Unit\Collection;
 
 use Exact\Collection\LazySeq;
-use Exact\Collection\Seq;
+use Exact\Collection\Vec;
 use PHPUnit\Framework\TestCase;
 
 final class LazySeqTest extends TestCase
@@ -26,7 +26,7 @@ final class LazySeqTest extends TestCase
 
         self::assertFalse($evaluated);
 
-        $result = $lazy->toList();
+        $result = $lazy->toSeq();
 
         self::assertTrue($evaluated);
         self::assertSame(
@@ -50,7 +50,7 @@ final class LazySeqTest extends TestCase
 
         self::assertFalse($evaluated);
 
-        $lazy->toList();
+        $lazy->toSeq();
 
         self::assertTrue($evaluated);
     }
@@ -68,7 +68,7 @@ final class LazySeqTest extends TestCase
 
         self::assertSame(0, $mapped);
 
-        $lazy->toList();
+        $lazy->toSeq();
 
         self::assertSame(3, $mapped);
     }
@@ -86,7 +86,7 @@ final class LazySeqTest extends TestCase
 
         self::assertSame(0, $checked);
 
-        $lazy->toList();
+        $lazy->toSeq();
 
         self::assertSame(3, $checked);
     }
@@ -107,7 +107,7 @@ final class LazySeqTest extends TestCase
 
         $result = $lazy
             ->take(3)
-            ->toList();
+            ->toSeq();
 
         self::assertSame(
             [1, 2, 3],
@@ -131,7 +131,7 @@ final class LazySeqTest extends TestCase
 
         $result = $lazy
             ->take(0)
-            ->toList();
+            ->toSeq();
 
         self::assertSame([], $result->toArray());
         self::assertFalse($evaluated);
@@ -142,9 +142,9 @@ final class LazySeqTest extends TestCase
         $result = LazySeq::from([1, 2, 3, 4, 5])
             ->map(fn (int $value) => $value * 2)
             ->filter(fn (int $value) => $value > 5)
-            ->toList();
+            ->toSeq();
 
-        self::assertInstanceOf(Seq::class, $result);
+        self::assertInstanceOf(Vec::class, $result);
 
         self::assertSame(
             [6, 8, 10],
@@ -168,10 +168,50 @@ final class LazySeqTest extends TestCase
             ->map(fn (int $value) => $value * 2)
             ->filter(fn (int $value) => $value % 4 === 0)
             ->take(5)
-            ->toList();
+            ->toSeq();
 
         self::assertSame(
             [4, 8, 12, 16, 20],
+            $result->toArray(),
+        );
+    }
+
+    public function testMemoizeCachesEvaluation(): void
+    {
+        $evaluated = 0;
+        $lazy = LazySeq::defer(function () use (&$evaluated): iterable {
+            $evaluated++;
+            yield 1;
+            yield 2;
+            yield 3;
+        })->memoize();
+
+        $lazy->toSeq();
+        $lazy->toSeq();
+
+        self::assertSame(1, $evaluated);
+    }
+
+    public function testZipCombinesElementsFromTwoLazySequences(): void
+    {
+        $result = LazySeq::from([1, 2, 3])
+            ->zip(LazySeq::from(['a', 'b']))
+            ->toSeq();
+
+        self::assertSame(
+            [[1, 'a'], [2, 'b']],
+            $result->toArray(),
+        );
+    }
+
+    public function testChunkGroupsValuesIntoFixedSizeBuffers(): void
+    {
+        $result = LazySeq::from([1, 2, 3, 4, 5])
+            ->chunk(2)
+            ->toSeq();
+
+        self::assertSame(
+            [[1, 2], [3, 4], [5]],
             $result->toArray(),
         );
     }

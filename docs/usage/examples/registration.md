@@ -3,9 +3,9 @@
 A registration flow often has optional input, validation, a domain identifier, and a final success or failure result.
 
 ```php
-use Exact\Data\Option\Option;
-use Exact\Data\Result\Result;
-use Exact\Data\Validated\Validated;
+use Exact\Type\Option\Option;
+use Exact\Type\Result\Result;
+use Exact\Type\Validated\Validated;
 use Exact\Value\Newtype;
 
 final readonly class RegistrationUserId extends Newtype

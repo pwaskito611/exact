@@ -35,4 +35,4 @@ Choose `pipe()` when reading the workflow in input order is clearer. Choose `com
 ## Next Steps
 
 - Combine composition with [Pipe](pipe.md).
-- Apply transformations to [Seq](../collections/seq.md) or [LazySeq](../collections/lazy-seq.md).
+- Apply transformations to [Vec](../collections/seq.md) or [LazySeq](../collections/lazy-seq.md).

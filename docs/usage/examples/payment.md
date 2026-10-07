@@ -3,9 +3,9 @@
 Payment states are a natural fit for named variants. Pattern matching can convert each state into a `Result` for the rest of the workflow.
 
 ```php
-use Exact\Adt\PatternMatch;
-use Exact\Adt\Variant;
-use Exact\Data\Result\Result;
+use Exact\Pattern\PatternMatch;
+use Exact\Pattern\Variant;
+use Exact\Type\Result\Result;
 
 $payment = Variant::of('Failed', ['code' => 'DECLINED']);
 

@@ -48,4 +48,4 @@ $values = $normalized->toArray(); // ['read']
 ## Next Steps
 
 - Use [Map](map.md) for key-value data.
-- Use [Seq](seq.md) when duplicate values and order-preserving transformations are both meaningful.
+- Use [Vec](seq.md) when duplicate values and order-preserving transformations are both meaningful.

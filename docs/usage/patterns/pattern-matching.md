@@ -7,8 +7,8 @@ Pattern matching turns a named `Variant` into a value by selecting a handler for
 ## Basic Workflow
 
 ```php
-use Exact\Adt\PatternMatch;
-use Exact\Adt\Variant;
+use Exact\Pattern\PatternMatch;
+use Exact\Pattern\Variant;
 
 $state = Variant::of('Pending', ['orderId' => 'O-10']);
 
@@ -29,8 +29,8 @@ Registering the same case name again replaces its earlier handler. Likewise, cal
 `Matcher` also has a public constructor that accepts a `Variant`. `PatternMatch::on()` is the shorter static entry point for the same workflow:
 
 ```php
-use Exact\Adt\Matcher;
-use Exact\Adt\Variant;
+use Exact\Pattern\Matcher;
+use Exact\Pattern\Variant;
 
 $label = (new Matcher(Variant::of('Paid', 'R-204')))
     ->case('Paid', static fn (string $receipt): string => "Paid: {$receipt}")
@@ -46,7 +46,7 @@ Omit `default()` when an unhandled state should be visible as an error. `Matcher
 Handlers can return `Result`, `Option`, or a domain value. This makes matching useful as one step in a larger workflow:
 
 ```php
-use Exact\Data\Result\Result;
+use Exact\Type\Result\Result;
 
 $result = PatternMatch::on(Variant::of('Failed', 'DECLINED'))
     ->case('Paid', static fn (string $receipt): Result => Result::ok($receipt))

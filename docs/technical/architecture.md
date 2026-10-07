@@ -36,7 +36,7 @@ These types do not depend on collections, values, or the ADT matcher.
 
 ### Collection
 
-`Seq`, `NonEmptySeq`, `Map`, `Set`, and `LazySeq` represent ordered, keyed, unique, non-empty, and deferred data respectively. Eager collections use arrays; `LazySeq` uses deferred iterable production and materializes to `Seq` through `toList()`.
+`Vec`, `NonEmptyVec`, `Map`, `Set`, and `LazySeq` represent ordered, keyed, unique, non-empty, and deferred data respectively. Eager collections use arrays; `LazySeq` uses deferred iterable production and materializes to `Vec` through `toList()`.
 
 ### Function
 

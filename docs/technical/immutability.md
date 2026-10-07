@@ -4,7 +4,7 @@
 
 Exact favors shallow, value-returning immutability:
 
-- `Option`, `Result`, `Variant`, `Seq`, `NonEmptySeq`, `Map`, `Set`, `Newtype`, and `ValueObject` are readonly classes.
+- `Option`, `Result`, `Variant`, `Vec`, `NonEmptyVec`, `Map`, `Set`, `Newtype`, and `ValueObject` are readonly classes.
 - `Either`, `Tuple`, `Pair`, `Pipe`, and `LazySeq` use readonly properties even though their classes are not all declared readonly.
 - Transformations generally construct and return a new value.
 - No-op branches may return the same instance, such as `None::map()`, `Err::map()`, or adding an existing value to `Set`.

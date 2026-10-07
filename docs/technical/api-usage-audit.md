@@ -17,8 +17,8 @@ This second-pass inventory was rebuilt from Composer-loaded source using PHP ref
 | `Variant` | `of()`, `name()`, `value()`, `is()` | [Algebraic Data Types](../usage/modeling/adt.md) |
 | `PatternMatch` | `on()` | [Pattern Matching](../usage/patterns/pattern-matching.md) |
 | `Matcher` | public constructor, `case()`, `default()`, `run()` | [Pattern Matching](../usage/patterns/pattern-matching.md) |
-| `Seq` | `empty()`, `of()`, `fromArray()`, `isEmpty()`, `isNotEmpty()`, `size()`, `head()`, `tail()`, `get()`, `map()`, `filter()`, `flatMap()`, `foldLeft()`, `contains()`, `append()`, `prepend()`, `toArray()`, `each()` | [Seq](../usage/collections/seq.md) |
-| `NonEmptySeq` | `of()`, `fromArray()`, `head()`, `tail()`, `size()`, `map()`, `filter()`, `append()`, `prepend()`, `toArray()` | [NonEmptySeq](../usage/collections/non-empty-seq.md) |
+| `Vec` | `empty()`, `of()`, `fromArray()`, `isEmpty()`, `isNotEmpty()`, `size()`, `head()`, `tail()`, `get()`, `map()`, `filter()`, `flatMap()`, `foldLeft()`, `contains()`, `append()`, `prepend()`, `toArray()`, `each()` | [Vec](../usage/collections/seq.md) |
+| `NonEmptyVec` | `of()`, `fromArray()`, `head()`, `tail()`, `size()`, `map()`, `filter()`, `append()`, `prepend()`, `toArray()` | [NonEmptyVec](../usage/collections/non-empty-seq.md) |
 | `Map` | `empty()`, `of()`, `fromArray()`, `has()`, `get()`, `getOrElse()`, `put()`, `remove()`, `size()`, `isEmpty()`, `map()`, `toArray()` | [Map](../usage/collections/map.md) |
 | `Set` | `empty()`, `of()`, `add()`, `remove()`, `contains()`, `size()`, `isEmpty()`, `union()`, `intersect()`, `map()`, `toArray()` | [Set](../usage/collections/set.md) |
 | `LazySeq` | `from()`, `defer()`, `map()`, `filter()`, `take()`, `toList()` | [LazySeq](../usage/collections/lazy-seq.md) |
@@ -32,7 +32,7 @@ This second-pass inventory was rebuilt from Composer-loaded source using PHP ref
 | `Option`, `Result`, `Either`, `Validated` | Yes | Yes, including branch operations and extraction | `KEEP` after task-oriented rewrite |
 | `Tuple`, `Pair`, `Newtype`, `ValueObject` | Yes | Yes, using domain values where appropriate | `KEEP` |
 | `Variant`, `PatternMatch`, `Matcher` | Yes | Yes, including direct `Matcher` construction | `KEEP` |
-| `Seq`, `NonEmptySeq`, `Map`, `Set`, `LazySeq` | Yes | Yes, covering factories, queries, transformations, and updates | `KEEP` after task-oriented rewrite |
+| `Vec`, `NonEmptyVec`, `Map`, `Set`, `LazySeq` | Yes | Yes, covering factories, queries, transformations, and updates | `KEEP` after task-oriented rewrite |
 | `Pipe`, `Composition` | Yes | Yes | `KEEP` |
 | `Functions` helpers | Excluded by scope | Existing examples remain in the guide | `EXCLUDE` from the non-helper audit |
 | Exception construction APIs | Triggering behavior documented where relevant; unused `InvalidStateException` excluded | Constructors are infrastructure rather than normal workflows | `EXCLUDE` from usage API coverage |

@@ -1,13 +1,13 @@
-# NonEmptySeq
+# NonEmptyVec
 
-`NonEmptySeq` is an ordered sequence whose first item is guaranteed to exist.
+`NonEmptyVec` is an ordered sequence whose first item is guaranteed to exist.
 
 ## Quick Example
 
 ```php
-use Exact\Collection\NonEmptySeq;
+use Exact\Collection\NonEmptyVec;
 
-$statuses = NonEmptySeq::of('pending', 'paid');
+$statuses = NonEmptyVec::of('pending', 'paid');
 $labels = $statuses
     ->map(static fn (string $status): string => strtoupper($status))
     ->prepend('order:')
@@ -22,26 +22,26 @@ $labels = $statuses
 `of($head, ...$tail)` requires a first item. `fromArray()` is useful when values already come in an array:
 
 ```php
-$requiredStatuses = NonEmptySeq::fromArray(['pending', 'paid']);
+$requiredStatuses = NonEmptyVec::fromArray(['pending', 'paid']);
 ```
 
 Passing an empty array to `fromArray()` throws `InvalidArgumentException`.
 
 ## Reading Items
 
-`head()` always returns the first value and `size()` reports the number of items. `tail()` returns a regular `Seq`, because a one-item sequence has an empty tail:
+`head()` always returns the first value and `size()` reports the number of items. `tail()` returns a regular `Vec`, because a one-item sequence has an empty tail:
 
 ```php
 $first = $statuses->head();
 $count = $statuses->size();
-$remaining = NonEmptySeq::of('pending')->tail();
+$remaining = NonEmptyVec::of('pending')->tail();
 ```
 
 `toArray()` returns the zero-based values as a PHP array.
 
 ## Transforming and Filtering
 
-`map()` preserves `NonEmptySeq`. `filter()` returns an ordinary `Seq`, since every item could be removed:
+`map()` preserves `NonEmptyVec`. `filter()` returns an ordinary `Vec`, since every item could be removed:
 
 ```php
 $maybeStatuses = $statuses->filter(
@@ -53,10 +53,10 @@ $withCancelled = $statuses->append('cancelled');
 
 ## Next Steps
 
-- Compare this guarantee with [Seq](seq.md), whose result may be empty.
+- Compare this guarantee with [Vec](seq.md), whose result may be empty.
 - Use [Validated](../fundamentals/validated.md) when non-empty input is one rule among several.
 
 ## Next Steps
 
-- Compare its guarantee with [Seq](seq.md).
+- Compare its guarantee with [Vec](seq.md).
 - Use [Validated](../fundamentals/validated.md) when non-empty input is one validation rule among several.

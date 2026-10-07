@@ -12,17 +12,36 @@ The library focuses on type-oriented programming, immutability in its data and c
 
 - **Data Types** — `Option`, `Result`, `Either`, `Validated`, tuples, and pairs for explicit domain values and outcomes.
 - **Algebraic Data Types** — named `Variant` values with `PatternMatch` and `Matcher` for case-based handling.
-- **Value Modeling** — `Newtype` for immutable wrapped values and `ValueObject` as a base abstraction for equality-based domain values.
-- **Collections** — `Seq`, `NonEmptySeq`, `Map`, `Set`, and lazy `LazySeq` with transformation and conversion operations.
-- **Function Composition** — right-to-left composition, left-to-right piping, currying, partial application, and immutable value pipelines.
+- **Collections** — `Vec`, `NonEmptyVec`, `Map`, `Set`, and lazy `LazySeq` with transformation and conversion operations.
+
+## Folder Architecture
+
+The source tree is organized by the role each abstraction plays in domain code:
+
+```text
+src/
+├── Type/        Explicit domain types and algebraic data types
+│   ├── Option/  Optional values: Option, Some, and None
+│   ├── Either/  Left and right alternatives
+│   ├── Validated/ Validation values that can accumulate errors
+│   └── Tuple/   Fixed-arity tuple types
+├── Collection/  Immutable and lazy collection abstractions
+├── Pattern/     Variant values and pattern-matching support
+└── Exception/   Library-specific exceptions
+```
+
+`Type` separates domain values from their operations: for example, `Option` and `Either` make alternative states explicit, while `Validated` represents accumulated validation outcomes. `Collection` contains reusable data structures such as vectors, maps, sets, deques, and lazy sequences. `Pattern` provides the matching mechanism for handling named variants, and `Exception` keeps library errors in one place.
+
+The test tree mirrors these source areas. `tests/Unit` checks individual types and collection operations, `tests/Feature` exercises behavior across public APIs, and `tests/Integration` verifies how abstractions work together in domain and composition flows. Usage guides and design rationale are separated under `docs/usage` and `docs/technical`, respectively.
 
 ## Example
 
 ```php
 <?php
 
-use Exact\Data\Option\Option;
-use Exact\Data\Result\Result;
+use Exact\Type\Either\Either;
+use Exact\Type\Option\Option;
+use Exact\Type\Result\Result;
 
 $email = Option::from('USER@example.com')
     ->map(static fn (string $value): string => strtolower($value))
@@ -31,9 +50,13 @@ $email = Option::from('USER@example.com')
 $total = Result::ok(42)
     ->map(static fn (int $value): int => $value + 8)
     ->getOrElse(0);
+
+$checkout = Either::right(250)
+    ->map(static fn (int $value): int => $value + 50)
+    ->getOrElse(0);
 ```
 
-`Option::from(null)` creates `None`; a non-null value creates `Some`. `Result::map()` transforms an `Ok` value while preserving an `Err` branch.
+`Option::from(null)` creates `None`; a non-null value creates `Some`. `Result::map()` transforms an `Ok` value while preserving an `Err` branch. `Either` keeps a meaningful left/right alternative, which is useful when the domain distinguishes a business decision from a success path.
 
 ## Installation
 
@@ -41,6 +64,15 @@ Exact requires PHP 8.2 or later and has no runtime dependencies.
 
 ```bash
 composer require pandu/exact
+```
+
+## Running Tests
+
+Install the development dependencies and run the complete PHPUnit suite with:
+
+```bash
+composer install
+composer test
 ```
 
 ## Documentation

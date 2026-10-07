@@ -12,7 +12,7 @@ The repository uses PHPUnit and currently separates tests by the level of behavi
 
 ## Integration
 
-`tests/Integration/` verifies interaction across abstractions. Current scenarios combine `Newtype`, `Option`, `Validated`, and `Result`; combine `LazySeq`, `Seq`, and `Result`; and turn an ADT variant into a `Result`.
+`tests/Integration/` verifies interaction across abstractions. Current scenarios combine `Newtype`, `Option`, `Validated`, and `Result`; combine `LazySeq`, `Vec`, and `Result`; and turn an ADT variant into a `Result`.
 
 ## Test Runner
 

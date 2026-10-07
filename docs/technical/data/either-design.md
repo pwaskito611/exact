@@ -6,9 +6,11 @@
 
 ## Contract
 
-`map()` and `flatMap()` are right-biased: they transform or continue only the `Right` branch. `mapLeft()` transforms only `Left`. `fold()` handles left first and right second.
+`map()`, `flatMap()`, and `tap()` are right-biased: they transform or continue only the `Right` branch. `mapLeft()`, `flatMapLeft()`, and `tapLeft()` operate on `Left`. `fold()` handles left first and right second.
 
-`getLeft()` and `getRight()` are branch-specific accessors and throw `LogicException` when called on the opposite branch. `swap()` creates the opposite branch with the same payload.
+`getLeft()` and `getRight()` are branch-specific accessors and throw `LogicException` when called on the opposite branch. `swap()` creates the opposite branch with the same payload. Utility constructors such as `of()`, `pure()`, `fromNullable()`, and `tryCatch()` provide explicit domain-oriented creation paths without changing the right-biased semantics.
+
+`orElse()`, `orElseGet()`, `getOrElse()`, `getOrElseGet()`, and `getOrElseThrow()` support recovery and extraction; `filter()`, `exists()`, `forall()`, and `contains()` support predicate-based inspection; `bimap()`, `ap()`, `zip()`, `zipWith()`, `flatten()`, `sequence()`, and `traverse()` support combinations and fail-fast collection behavior while preserving `TypeError` validation for invalid callback results.
 
 ## Rationale and Trade-offs
 
