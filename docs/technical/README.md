@@ -23,6 +23,7 @@ This section documents the architecture, semantic contracts, design principles, 
 ## Collections
 
 - [Collection Design](collection/collection-design.md)
+- [Query Design](query/query-design.md)
 
 ## Cross-Cutting Concerns
 

@@ -1,10 +1,10 @@
-# EXACT.md — agent guide for `pwaskito611/exact` (PHP)
+# EXACT.md — AI agent guide for `pandu/exact` (PHP)
 
-Purpose: use the library correctly with minimal tokens. Read this first. Do NOT read README or full docs unless a method is missing here.
+Purpose: help AI coding assistants use and change this library correctly with minimal context. Read this first before proposing or implementing Exact API usage. Do NOT read README or full docs unless a method is missing here.
 
 ## Facts
 - PHP >= 8.2, no runtime deps. Root namespace `Exact\`. Tests: `composer test` (PHPUnit).
-- Install: README says `composer require pandu/exact` (repo is `pwaskito611/exact`). Check `composer.json` "name" before running install.
+- Install: `composer require pandu/exact`; the Composer package name is defined in `composer.json`.
 - Everything is **immutable**. Methods return new instances. Ignoring the return value = bug (`$v->append(1);` does nothing).
 - Constructors are private/limited: use static factories (`Vec::of`, `Either::right`, `Map::of`, ...). Exception: `Some`, `None`, `Matcher`, `Variant`-implementing classes have public constructors, but prefer the abstraction.
 - Do not invent methods. If a method is not listed here, grep `src/` or fetch the one relevant doc page (see "Lookup").
@@ -72,6 +72,8 @@ $r = PatternMatch::on(Variant::of('Paid', 'R-1'))        // Variant::unit('X') =
 - Read: `first/head`, `last`, `tail`, `at($i)/get($i)`, `firstOrNull`, `lastOrNull`, `atOrNull($i)`, `count/size`, `isEmpty/isNotEmpty`.
   - `first/last/tail` on empty → `EmptyCollectionException`; `at/get` out of range → `OutOfBoundsException`; `reduce` on empty → `OutOfBoundsException`.
 - Transform: `map(fn($x))`, `filter`, `reject`, `flatMap` (callback must return `Vec`, else `TypeError`), `tap`/`each` (return same instance, NOT void), `unique` (structural), `reverse`, `zip`, `zipWith($o,fn)`, `enumerate` (→ `[i,x]` pairs).
+- Projection/data processing: `select` / `project` (typed callback projection), `filterMap` (drop null/None), `partition` (matching and non-matching Vec pair), `scan` (initial value then running results), `flatten` (one level), `distinctBy`, `groupBy` (int|string keys), `sortBy`, `minBy` / `maxBy`, `indexBy` / `keyBy` (last duplicate key wins).
+- Joins: `innerJoin`, `leftJoin`, `rightJoin`, `fullJoin`, `crossJoin`; eager, preserve documented input order, and emit all matches for duplicate keys. Outer-join callbacks receive `Option` for an absent side. `crossJoin` is O(n*m).
 - Slice: `take($n)`, `drop($n)` (negative → `InvalidArgumentException`), `slice($offset,?$len)`, `takeWhile`, `dropWhile`.
 - Combine: `append`, `prepend`, `concat(Vec)`.
 - Reduce: `foldLeft($init, fn($acc,$x))`, `foldRight($init, fn($x,$acc))` ← arg order flips, `reduce(fn($acc,$x))`.
@@ -87,7 +89,17 @@ $r = PatternMatch::on(Variant::of('Paid', 'R-1'))        // Variant::unit('X') =
   - `map` / `filter` / `tap`: `(value, key)`
   - `mapKeys` / `filterKeys`: `(key, value)`
   - `fold($init, fn)`: `(acc, value, key)`
+- `filterMap(fn)` receives `(value, key)`, drops null/None, and keeps original keys; `partition(predicate)` returns matching and non-matching Maps, preserving keys.
 - `equals(Map)` is order-independent, strict. `toArray()` keyed; `json_encode` → JSON object.
+
+## Query (separate composable module)
+- Import `Exact\Query\Query`; start with `Query::from(iterable $source)`. It accepts `Vec`, `NonEmptyVec`, `LazySeq`, `NonEmptyLazySeq`, `Map`, arrays, and other iterables. Query is a separate module; do not add Query-specific methods or dependencies to collection classes.
+- Pipeline: `where` / `filter`, `whereIn` / `whereNotIn`, `select` / `project` / `pluck`, joins, `take` / `limit`, `drop` / `offset`, `takeWhile`, `skipWhile`, `distinct` / `distinctBy`, `groupBy` / `having`, `orderBy` / `thenBy` / `sortBy`, `union` / `unionAll` / `intersect` / `except`, `scan`, `partition`, `tap`, `zip` / `zipWith`, `flatMap`, `filterMap`, `window`.
+- Joins: `join` aliases `innerJoin`; also `leftJoin`, `rightJoin`, `fullJoin`, `semiJoin`, `antiJoin`, `crossJoin`. Equi-join key callbacks return int|string; duplicate keys produce all matching pairs. Default results are `Pair`; outer join absent sides use `Option`.
+- Aggregation/terminals: `groupFold`, `aggregateBy`, `countBy`, `sumBy`, `aggregate` / `fold`, `foldWhile`, `sum`, `mean` / `average`, `min` / `max`, `minBy` / `maxBy`, `exists`, `first` / `firstOrNone`, `last` / `lastOrNone`, `count`.
+- `select(callable(T): U)` supports arbitrary typed output, including tuples and readonly objects; subsequent Query callbacks receive `U`. No reflection-based `selectFields()` API.
+- Execution: `execute()` eagerly returns `Vec` (or grouped `Map`); `executeLazy()` returns `LazySeq` for sequence results and `Map` for grouped results. Stream-compatible stages such as filtering and projection stay deferred. Grouping and sorting materialize; hash joins index/materialize join inputs. A one-shot generator should only be executed once.
+- Inspection: `explain()` describes the plan without running callbacks; `profile()` executes it and returns results/statistics. See `docs/usage/query.md` for exact behavior and signatures, and `docs/technical/query/query-design.md` for implementation constraints.
 
 ## Other collections (not detailed here — fetch the doc page when needed)
 `NonEmptyVec`, `LazySeq`, `NonEmptyLazySeq`, `Range`, `Deque`, `PriorityQueue`, `NonEmptyMap`, `SortedMap`, `BiMap`, `MultiMap`, `Set`, `NonEmptySet`, `SortedSet`, `MultiSet`.
@@ -103,11 +115,9 @@ Non-empty variants stay non-empty under map/append; ops that can empty them retu
 6. Pass `static fn` closures; type-hint handler params (`Variant`, `Some`, ...).
 
 ## Lookup (cheapest path)
-1. Search this file. 2. `grep -rn "function <name>" src/` and read only that method. 3. Fetch ONE raw doc, not the HTML page:
-`https://github.com/pwaskito611/exact/raw/refs/heads/main/docs/usage/<section>/<file>.md`
-Sections/files: `fundamentals/{option,either,validated,tuples}.md`, `modeling/adt.md`, `patterns/{error-handling,pattern-matching,domain-modeling}.md`, `collections/{overview,vec,non-empty-vec,map,set,lazy-seq,bimap,deque,multimap,multiset,non-empty-lazy-seq,non-empty-map,non-empty-set,priority-queue,range,sorted-map,sorted-set,map-variants,set-variants}.md`, `examples/{ecommerce,payment,registration}.md`.
+1. Search this file. 2. Search `src/` for the method and inspect its implementation/signature. 3. Read only the relevant local guide under `docs/usage/` (including `query.md`) or technical design under `docs/technical/`. Avoid broad reads when a single method/page is enough.
 
 ## Verify
 After edits: `php -l <file>` then `composer test` (or `vendor/bin/phpunit --filter <Name>`). Fix by reading the failing assertion, not the whole suite.
 
-_Source: README + docs/usage at main (Oct 2026). Sections marked "verify" were not confirmed; Set/LazySeq/Deque/etc. and Tuples/ADT pages were not read._
+_Keep this agent guide aligned with the current source and documentation whenever public APIs or their behavior change._

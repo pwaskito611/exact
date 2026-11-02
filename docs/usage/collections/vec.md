@@ -269,6 +269,51 @@ $indexed = Vec::of('a', 'b', 'c')->enumerate();
 
 `zip()` and `zipWith()` never throw for mismatched lengths — they stop at `min(count($this), count($other))`.
 
+## Data Processing and Joins
+
+```php
+use Exact\Collection\Vec;
+
+$orders = Vec::of(
+    ['id' => 1, 'customerId' => 10, 'total' => 75],
+    ['id' => 2, 'customerId' => 11, 'total' => 125],
+);
+$customers = Vec::of(
+    ['id' => 10, 'name' => 'Ari'],
+    ['id' => 11, 'name' => 'Bea'],
+);
+
+$report = $orders
+    ->innerJoin(
+        $customers,
+        static fn (array $order): int => $order['customerId'],
+        static fn (array $customer): int => $customer['id'],
+        static fn (array $order, array $customer): array => [
+            'orderId' => $order['id'],
+            'customer' => $customer['name'],
+            'total' => $order['total'],
+        ],
+    )
+    ->select(static fn (array $row): array => [
+        'customer' => $row['customer'],
+        'total' => $row['total'],
+    ]);
+
+$byCustomer = $report->groupBy(static fn (array $row): string => $row['customer']);
+```
+
+- `select(callable $projection)` and `project(callable $projection)` transform every item and return a `Vec` of the callback result. They are callback-based projections; dynamic field names/reflection are not used.
+- `filterMap(callable $fn)` maps each item and drops `null` or `Option::none()` results; `Option::some($value)` and direct non-null values are retained.
+- `partition(callable $predicate)` evaluates each input once and returns `[matching Vec, non-matching Vec]`.
+- `scan($initial, callable $fn)` returns a `Vec` containing the initial value followed by each accumulated value.
+- `flatten()` flattens one level of nested `Vec`, arrays, and `Traversable` items. Other values pass through unchanged.
+- `distinctBy(callable $keySelector)` retains the first item for each selector key.
+- `groupBy(callable $keySelector)` returns `Map<key, Vec<items>>`; keys must be integers or strings, otherwise `InvalidArgumentException` is thrown.
+- `sortBy(callable $selector)` returns items in ascending selector order. `minBy()` / `maxBy()` return the matching item or `null` for an empty Vec.
+- `indexBy(callable $keySelector)` and its alias `keyBy()` return a `Map`; if keys repeat, the last item for that key wins.
+
+`innerJoin()`, `leftJoin()`, `rightJoin()`, `fullJoin()`, and `crossJoin()` are eager. Equi-join key selectors are evaluated to build a hash lookup; duplicate keys produce every matching pair in deterministic collection order. `leftJoin()` gives its combiner `Option<U>` for the right side, `rightJoin()` gives `Option<T>` for the left side, and `fullJoin()` gives `Option` for both. `crossJoin()` emits `count(left) * count(right)` results and can consume substantial time and memory.
+
 ## Comparing Vectors
 
 ```php
@@ -324,7 +369,25 @@ $json = json_encode($products);
 | `tail` | `tail(): self` | Everything except the first item; throws `EmptyCollectionException` on empty. |
 | `get` | `get(int $index): mixed` | Alias for `at()`. |
 | `map` | `map(callable $fn): self` | Transform each item. |
+| `select` | `select(callable $projection): self` | Callback-based projection; alias semantics of `map()`. |
+| `project` | `project(callable $projection): self` | Alias for `select()`. |
 | `filter` | `filter(callable $predicate): self` | Keep items that satisfy a predicate. |
+| `filterMap` | `filterMap(callable $fn): self` | Map and discard `null`/`Option::none()` results. |
+| `partition` | `partition(callable $predicate): array{Vec, Vec}` | Return matching and non-matching Vecs. |
+| `scan` | `scan(mixed $initial, callable $fn): self` | Return initial accumulator and each running result. |
+| `flatten` | `flatten(): self` | Flatten one level of nested Vec, array, or Traversable items. |
+| `distinctBy` | `distinctBy(callable $keySelector): self` | Keep the first item per selected key. |
+| `groupBy` | `groupBy(callable $keySelector): Map` | Group items by int/string key. |
+| `sortBy` | `sortBy(callable $selector): self` | Sort ascending by a selected value. |
+| `minBy` | `minBy(callable $selector): mixed` | Return item with the smallest selected value, or null. |
+| `maxBy` | `maxBy(callable $selector): mixed` | Return item with the largest selected value, or null. |
+| `indexBy` | `indexBy(callable $keySelector): Map` | Index items; later duplicate keys overwrite earlier ones. |
+| `keyBy` | `keyBy(callable $keySelector): Map` | Alias for `indexBy()`. |
+| `innerJoin` | `innerJoin(iterable $other, callable $leftKey, callable $rightKey, callable $combine): self` | Eager hash join; emit all matching pairs. |
+| `leftJoin` | `leftJoin(iterable $other, callable $leftKey, callable $rightKey, callable $combine): self` | Preserve left items; unmatched right input is `Option::none()`. |
+| `rightJoin` | `rightJoin(iterable $other, callable $leftKey, callable $rightKey, callable $combine): self` | Preserve right items; unmatched left input is `Option::none()`. |
+| `fullJoin` | `fullJoin(iterable $other, callable $leftKey, callable $rightKey, callable $combine): self` | Preserve both sides; each unmatched side is an Option. |
+| `crossJoin` | `crossJoin(iterable $other, callable $combine): self` | Eager cartesian product; output size is n × m. |
 | `reject` | `reject(callable $predicate): self` | Drop items that satisfy a predicate. |
 | `flatMap` | `flatMap(callable $fn): self` | Concatenate the `Vec` returned for each item; throws `TypeError` otherwise. |
 | `foldLeft` | `foldLeft(mixed $initial, callable $fn): mixed` | Fold from the left; callback receives `(accumulator, item)`. |

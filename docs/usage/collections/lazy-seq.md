@@ -88,6 +88,28 @@ $inspected = $lazy->tap(static fn (int $n): void => error_log("n={$n}"));
 
 All combinators are lazy: they do not consume values until the returned `LazySeq` is iterated.
 
+### Additional Processing
+
+```php
+$projected = LazySeq::from($orders)
+    ->filterMap(static fn (Order $order): ?OrderSummary =>
+        $order->isValid() ? new OrderSummary($order->id, $order->total) : null
+    )
+    ->select(static fn (OrderSummary $order): array => [$order->id, $order->total]);
+
+$runningTotals = LazySeq::from([2, 3, 5])
+    ->scan(0, static fn (int $sum, int $value): int => $sum + $value)
+    ->toArray(); // [0, 2, 5, 10]
+```
+
+- `select(callable $projection)` lazily projects items; `project()` is an alias. Both preserve the source's deferred iteration and infer the projected item type.
+- `filterMap(callable $fn)` lazily maps and drops `null` or `Option::none()` results; `Option::some($value)` and direct non-null values are retained.
+- `scan($initial, callable $fn)` lazily yields the initial accumulator, then the accumulator after each source item.
+- `flatten()` lazily flattens one level of nested `Vec`, arrays, and `Traversable` items. Other values pass through unchanged.
+- `distinctBy(callable $keySelector)` lazily retains the first item for each selected key.
+
+`groupBy()` consumes the entire source immediately and returns `Map<key, Vec<items>>`; keys must be integers or strings. `sortBy()` also consumes the source immediately to sort it, then returns a `LazySeq` over the sorted items. `minBy()` and `maxBy()` are terminal operations that consume the source and return the matching item, or `null` when empty. These operations are not suitable for infinite sequences.
+
 ## Slicing and Limiting
 
 ```php
@@ -133,6 +155,12 @@ $indexed  = $first->enumerate();
 - `enumerate()` yields `[index, item]` starting at index `0`.
 
 `zip()` and `zipWith()` are finite: they stop as soon as one side ends. This is how an infinite `LazySeq` can be paired with a bounded one.
+
+### Joins
+
+`innerJoin()`, `leftJoin()`, `rightJoin()`, `fullJoin()`, and `crossJoin()` return deferred `LazySeq` pipelines and require another `LazySeq` plus key selectors and a combiner. Equi-join selectors must return integer or string keys. Duplicate keys generate every matching pair. Outer-join combiners receive `Option` for a possibly absent side.
+
+The right input is materialized when an inner/left/cross join is iterated. A right join materializes the left input, and a full join materializes both inputs. Thus results can be consumed lazily, but the join is not fully streaming and requires finite, replayable inputs for repeated iteration.
 
 ## Terminal Operations
 
@@ -209,10 +237,25 @@ foreach (LazySeq::range(0, 3) as $value) {
 | `generate` | `static generate(callable $generator): self` | Yield until the callable returns `null`. |
 | `range` | `static range(mixed $start, mixed $end, mixed $step = 1): self` | Half-open numeric range. Zero step throws. |
 | `map` | `map(callable $fn): self` | Lazy transform. |
+| `select` | `select(callable $projection): self` | Lazy callback-based projection. |
+| `project` | `project(callable $projection): self` | Alias for `select()`. |
 | `filter` | `filter(callable $predicate): self` | Lazy keep. |
+| `filterMap` | `filterMap(callable $fn): self` | Lazy map and discard `null`/`Option::none()` results. |
 | `reject` | `reject(callable $predicate): self` | Lazy drop by predicate. |
 | `flatMap` | `flatMap(callable $fn): self` | Lazy flat map; `$fn` returns an iterable. |
 | `tap` | `tap(callable $fn): self` | Side effect without changing values. |
+| `scan` | `scan(mixed $initial, callable $fn): self` | Lazily yield initial accumulator and each running result. |
+| `flatten` | `flatten(): self` | Lazily flatten one level of nested Vec/array/Traversable values. |
+| `distinctBy` | `distinctBy(callable $keySelector): self` | Lazily keep the first item for each selected key. |
+| `groupBy` | `groupBy(callable $keySelector): Map` | Eagerly group into `Map<key, Vec>`; int/string keys only. |
+| `sortBy` | `sortBy(callable $selector): self` | Eagerly sort, then wrap the sorted values in a LazySeq. |
+| `minBy` | `minBy(callable $selector): mixed` | Consume and return smallest selected item, or null. |
+| `maxBy` | `maxBy(callable $selector): mixed` | Consume and return largest selected item, or null. |
+| `innerJoin` | `innerJoin(self $other, callable $leftKey, callable $rightKey, callable $combine): self` | Deferred equi-join; emits all matches. |
+| `leftJoin` | `leftJoin(self $other, callable $leftKey, callable $rightKey, callable $combine): self` | Deferred left join; unmatched right side is `Option::none()`. |
+| `rightJoin` | `rightJoin(self $other, callable $leftKey, callable $rightKey, callable $combine): self` | Deferred right join; unmatched left side is `Option::none()`. |
+| `fullJoin` | `fullJoin(self $other, callable $leftKey, callable $rightKey, callable $combine): self` | Deferred full join; unmatched side is `Option::none()`. |
+| `crossJoin` | `crossJoin(self $other, callable $combine): self` | Deferred cartesian product; output size is n × m. |
 | `take` | `take(int $count): self` | Yield at most `$count` items; negative throws. |
 | `drop` | `drop(int $count): self` | Skip the first `$count` items; negative throws. |
 | `takeWhile` | `takeWhile(callable $predicate): self` | Yield while predicate holds. |

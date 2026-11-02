@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Exact\Collection;
 
+use Exact\Type\Option\Option;
 use Generator;
 use InvalidArgumentException;
 use IteratorAggregate;
@@ -160,6 +161,30 @@ final class LazySeq implements IteratorAggregate
     }
 
     /**
+     * Query-oriented projection for selecting a derived record from each item.
+     *
+     * @template U
+     * @param callable(T): U $projection
+     * @return self<U>
+     */
+    public function select(callable $projection): self
+    {
+        return $this->map($projection);
+    }
+
+    /**
+     * Alias for select().
+     *
+     * @template U
+     * @param callable(T): U $projection
+     * @return self<U>
+     */
+    public function project(callable $projection): self
+    {
+        return $this->select($projection);
+    }
+
+    /**
      * @param callable(T): bool $predicate
      * @return self<T>
      */
@@ -169,6 +194,390 @@ final class LazySeq implements IteratorAggregate
             foreach ($this->iterateSource() as $item) {
                 if ($predicate($item)) {
                     yield $item;
+                }
+            }
+        });
+    }
+
+    /**
+     * @template U
+     * @param callable(T): Option<U>|U|null $fn
+     * @return self<U>
+     */
+    public function filterMap(callable $fn): self
+    {
+        return new self(function () use ($fn): Generator {
+            foreach ($this->iterateSource() as $item) {
+                $mapped = $fn($item);
+
+                if ($mapped instanceof Option) {
+                    if ($mapped->isSome()) {
+                        yield $mapped->getOrNull();
+                    }
+
+                    continue;
+                }
+
+                if ($mapped !== null) {
+                    yield $mapped;
+                }
+            }
+        });
+    }
+
+    /**
+     * @template U
+     * @param U $initial
+     * @param callable(U, T): U $fn
+     * @return self<U>
+     */
+    public function scan(mixed $initial, callable $fn): self
+    {
+        return new self(function () use ($initial, $fn): Generator {
+            $accumulator = $initial;
+            yield $accumulator;
+
+            foreach ($this->iterateSource() as $item) {
+                $accumulator = $fn($accumulator, $item);
+                yield $accumulator;
+            }
+        });
+    }
+
+    /**
+     * @return self<mixed>
+     */
+    public function flatten(): self
+    {
+        return new self(function (): Generator {
+            foreach ($this->iterateSource() as $item) {
+                if ($item instanceof Vec) {
+                    foreach ($item->toArray() as $inner) {
+                        yield $inner;
+                    }
+
+                    continue;
+                }
+
+                if (is_array($item)) {
+                    foreach ($item as $inner) {
+                        yield $inner;
+                    }
+
+                    continue;
+                }
+
+                if ($item instanceof Traversable) {
+                    foreach ($item as $inner) {
+                        yield $inner;
+                    }
+
+                    continue;
+                }
+
+                yield $item;
+            }
+        });
+    }
+
+    /**
+     * @param callable(T): mixed $keySelector
+     * @return self<T>
+     */
+    public function distinctBy(callable $keySelector): self
+    {
+        return new self(function () use ($keySelector): Generator {
+            $seen = [];
+
+            foreach ($this->iterateSource() as $item) {
+                $key = $keySelector($item);
+                $token = is_scalar($key) || $key === null
+                    ? gettype($key) . ':' . (string) $key
+                    : serialize($key);
+
+                if (isset($seen[$token])) {
+                    continue;
+                }
+
+                $seen[$token] = true;
+                yield $item;
+            }
+        });
+    }
+
+    /**
+     * @template K of array-key
+     * @param callable(T): K $keySelector
+     * @return Map<K, Vec<T>>
+     */
+    public function groupBy(callable $keySelector): Map
+    {
+        $groups = [];
+
+        foreach ($this->iterateSource() as $item) {
+            $key = $keySelector($item);
+
+            if (!is_int($key) && !is_string($key)) {
+                throw new InvalidArgumentException(
+                    'LazySeq::groupBy() keys must be int or string.'
+                );
+            }
+
+            if (!isset($groups[$key])) {
+                $groups[$key] = [];
+            }
+
+            $groups[$key][] = $item;
+        }
+
+        $result = [];
+
+        foreach ($groups as $key => $items) {
+            $result[$key] = Vec::fromArray($items);
+        }
+
+        return Map::fromArray($result);
+    }
+
+    /**
+     * @template U
+     * @param callable(T): U $selector
+     * @return self<T>
+     */
+    public function sortBy(callable $selector): self
+    {
+        return self::from($this->toSeq()->sortBy($selector)->toArray());
+    }
+
+    /**
+     * @template U
+     * @param callable(T): U $selector
+     * @return T|null
+     */
+    public function minBy(callable $selector): mixed
+    {
+        $best = null;
+        $bestValue = null;
+        $hasValue = false;
+
+        foreach ($this->iterateSource() as $item) {
+            $value = $selector($item);
+
+            if (!$hasValue || $value < $bestValue) {
+                $best = $item;
+                $bestValue = $value;
+                $hasValue = true;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @template U
+     * @param callable(T): U $selector
+     * @return T|null
+     */
+    public function maxBy(callable $selector): mixed
+    {
+        $best = null;
+        $bestValue = null;
+        $hasValue = false;
+
+        foreach ($this->iterateSource() as $item) {
+            $value = $selector($item);
+
+            if (!$hasValue || $value > $bestValue) {
+                $best = $item;
+                $bestValue = $value;
+                $hasValue = true;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @template K of array-key
+     * @template U
+     * @template V
+     * @param self<U> $other
+     * @param callable(T): K $leftKeySelector
+     * @param callable(U): K $rightKeySelector
+     * @param callable(T, U): V $combine
+     * @return self<V>
+     */
+    public function innerJoin(self $other, callable $leftKeySelector, callable $rightKeySelector, callable $combine): self
+    {
+        return new self(function () use ($other, $leftKeySelector, $rightKeySelector, $combine): Generator {
+            $rightGroups = [];
+
+            foreach ($other->toArray() as $rightItem) {
+                $key = $rightKeySelector($rightItem);
+                $token = self::joinToken($key);
+                $rightGroups[$token][] = $rightItem;
+            }
+
+            foreach ($this->iterateSource() as $leftItem) {
+                $key = $leftKeySelector($leftItem);
+                $token = self::joinToken($key);
+
+                foreach ($rightGroups[$token] ?? [] as $rightItem) {
+                    yield $combine($leftItem, $rightItem);
+                }
+            }
+        });
+    }
+
+    /**
+     * @template K of array-key
+     * @template U
+     * @template V
+     * @param self<U> $other
+     * @param callable(T): K $leftKeySelector
+     * @param callable(U): K $rightKeySelector
+     * @param callable(T, Option<U>): V $combine
+     * @return self<V>
+     */
+    public function leftJoin(self $other, callable $leftKeySelector, callable $rightKeySelector, callable $combine): self
+    {
+        return new self(function () use ($other, $leftKeySelector, $rightKeySelector, $combine): Generator {
+            $rightGroups = [];
+
+            foreach ($other->toArray() as $rightItem) {
+                $key = $rightKeySelector($rightItem);
+                $token = self::joinToken($key);
+                $rightGroups[$token][] = $rightItem;
+            }
+
+            foreach ($this->iterateSource() as $leftItem) {
+                $token = self::joinToken($leftKeySelector($leftItem));
+                $matches = $rightGroups[$token] ?? [];
+
+                if ($matches === []) {
+                    yield $combine($leftItem, Option::none());
+                    continue;
+                }
+
+                foreach ($matches as $rightItem) {
+                    yield $combine($leftItem, Option::some($rightItem));
+                }
+            }
+        });
+    }
+
+    /**
+     * @template K of array-key
+     * @template U
+     * @template V
+     * @param self<U> $other
+     * @param callable(T): K $leftKeySelector
+     * @param callable(U): K $rightKeySelector
+     * @param callable(Option<T>, U): V $combine
+     * @return self<V>
+     */
+    public function rightJoin(self $other, callable $leftKeySelector, callable $rightKeySelector, callable $combine): self
+    {
+        return new self(function () use ($other, $leftKeySelector, $rightKeySelector, $combine): Generator {
+            $leftGroups = [];
+
+            foreach ($this->iterateSource() as $leftItem) {
+                $key = $leftKeySelector($leftItem);
+                $token = self::joinToken($key);
+                $leftGroups[$token][] = $leftItem;
+            }
+
+            foreach ($other->toArray() as $rightItem) {
+                $token = self::joinToken($rightKeySelector($rightItem));
+                $matches = $leftGroups[$token] ?? [];
+
+                if ($matches === []) {
+                    yield $combine(Option::none(), $rightItem);
+                    continue;
+                }
+
+                foreach ($matches as $leftItem) {
+                    yield $combine(Option::some($leftItem), $rightItem);
+                }
+            }
+        });
+    }
+
+    /**
+     * @template K of array-key
+     * @template U
+     * @template V
+     * @param self<U> $other
+     * @param callable(T): K $leftKeySelector
+     * @param callable(U): K $rightKeySelector
+     * @param callable(Option<T>, Option<U>): V $combine
+     * @return self<V>
+     */
+    public function fullJoin(self $other, callable $leftKeySelector, callable $rightKeySelector, callable $combine): self
+    {
+        return new self(function () use ($other, $leftKeySelector, $rightKeySelector, $combine): Generator {
+            $rightValues = $other->toArray();
+            $leftItems = $this->toArray();
+            $rightGroups = [];
+            $leftGroups = [];
+
+            foreach ($rightValues as $rightItem) {
+                $key = $rightKeySelector($rightItem);
+                $token = self::joinToken($key);
+                $rightGroups[$token][] = $rightItem;
+            }
+
+            foreach ($leftItems as $leftItem) {
+                $key = $leftKeySelector($leftItem);
+                $token = self::joinToken($key);
+                $leftGroups[$token][] = $leftItem;
+            }
+
+            $matchedTokens = [];
+
+            foreach ($leftItems as $leftItem) {
+                $token = self::joinToken($leftKeySelector($leftItem));
+                $matches = $rightGroups[$token] ?? [];
+
+                if ($matches === []) {
+                    yield $combine(Option::some($leftItem), Option::none());
+                    continue;
+                }
+
+                $matchedTokens[$token] = true;
+
+                foreach ($matches as $rightItem) {
+                    yield $combine(Option::some($leftItem), Option::some($rightItem));
+                }
+            }
+
+            foreach ($rightValues as $rightItem) {
+                $token = self::joinToken($rightKeySelector($rightItem));
+
+                if (isset($matchedTokens[$token]) || isset($leftGroups[$token])) {
+                    continue;
+                }
+
+                yield $combine(Option::none(), Option::some($rightItem));
+            }
+        });
+    }
+
+    /**
+     * @template U
+     * @template V
+     * @param self<U> $other
+     * @param callable(T, U): V $combine
+     * @return self<V>
+     */
+    public function crossJoin(self $other, callable $combine): self
+    {
+        return new self(function () use ($other, $combine): Generator {
+            $rightItems = $other->toArray();
+
+            foreach ($this->iterateSource() as $leftItem) {
+                foreach ($rightItems as $rightItem) {
+                    yield $combine($leftItem, $rightItem);
                 }
             }
         });
@@ -611,6 +1020,26 @@ final class LazySeq implements IteratorAggregate
     public function getIterator(): Traversable
     {
         return $this->iterateSource();
+    }
+
+    /**
+     * @return string
+     */
+    private static function joinToken(mixed $value): string
+    {
+        if (is_int($value) || is_string($value)) {
+            return (string) $value;
+        }
+
+        if (is_bool($value)) {
+            return 'bool:' . ($value ? '1' : '0');
+        }
+
+        if ($value === null) {
+            return 'null';
+        }
+
+        return gettype($value) . ':' . serialize($value);
     }
 
     // ───────────────────────── Internal ─────────────────────────

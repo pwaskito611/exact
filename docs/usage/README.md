@@ -40,6 +40,10 @@ Learn how to model PHP domain states with algebraic data types, immutable collec
 - [Map variants](collections/map-variants.md)
 - [Set variants](collections/set-variants.md)
 
+## Data processing
+
+- [Query](query.md)
+
 ## Patterns
 
 - [Error Handling](patterns/error-handling.md)

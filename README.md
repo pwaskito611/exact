@@ -1,18 +1,59 @@
 # Exact
 
-Exact is a PHP data-modeling library focused on Algebraic Data Types, immutable collections, and explicit pattern matching.
+Exact is a data-oriented programming toolkit for PHP. It helps you model, transform, and compose data with Algebraic Data Types, immutable collections, explicit pattern matching, and typed in-memory queries.
 
 ## Quick Introduction
 
-Exact helps PHP applications represent domain states explicitly instead of relying only on nullable values, exceptions, or loosely structured arrays. `Option`, `Either`, and `Validated` model distinct forms of alternatives and validation outcomes.
+Exact gives PHP applications data types and operations for making domain states and data transformations explicit. `Option`, `Either`, and `Validated` model optional values, alternatives, and validation outcomes without relying only on nullable values, exceptions, or loosely structured arrays.
 
-Its immutable collection transformations and named variants support predictable data processing and explicit case handling.
+Its immutable eager and lazy collections support predictable transformations, while named variants and pattern matching make domain cases explicit. The separate Query module composes filtering, joins, projections, and aggregation over any iterable.
+
+> **AI coding assistants:** Read [EXACT.md](EXACT.md) before using or changing Exact APIs. It is the concise agent guide to the library's conventions, API semantics, and lookup workflow.
 
 ## Core Features
 
 - **Types** — `Option`, `Either`, and `Validated` for optional values, alternatives, and validation outcomes; tuples and pairs for grouped values.
 - **Algebraic Data Types** — named `Variant` values with `PatternMatch` and `Matcher` for case-based handling.
 - **Immutable Collections** — `Vec`, `NonEmptyVec`, `LazySeq`, `NonEmptyLazySeq`, `Range`, `Deque`, `PriorityQueue`, `Map`, `NonEmptyMap`, `SortedMap`, `BiMap`, `MultiMap`, `Set`, `NonEmptySet`, `SortedSet`, and `MultiSet`.
+- **Composable Queries** — `Exact\Query\Query` builds typed in-memory pipelines for filtering, projection, joins, grouping, ordering, set operations, aggregation, and lazy execution.
+
+## Query Example
+
+Compose a join, filter, and projection into a typed in-memory pipeline:
+
+```php
+use Exact\Collection\Vec;
+use Exact\Query\Query;
+
+$orders = Vec::of(
+    ['id' => 101, 'customerId' => 1, 'total' => 80],
+    ['id' => 102, 'customerId' => 2, 'total' => 150],
+);
+$customers = Vec::of(
+    ['id' => 1, 'name' => 'Ari'],
+    ['id' => 2, 'name' => 'Bea'],
+);
+
+$report = Query::from($orders)
+    ->innerJoin(
+        $customers,
+        static fn (array $order): int => $order['customerId'],
+        static fn (array $customer): int => $customer['id'],
+        static fn (array $order, array $customer): array => [
+            'orderId' => $order['id'],
+            'customer' => $customer['name'],
+            'total' => $order['total'],
+        ],
+    )
+    ->where(static fn (array $row): bool => $row['total'] >= 100)
+    ->select(static fn (array $row): array => [
+        'customer' => $row['customer'],
+        'total' => $row['total'],
+    ])
+    ->execute();
+```
+
+`$report` is an eager `Vec` containing the projected rows. Use `executeLazy()` when a deferred sequence result is appropriate; grouping, sorting, and some joins still require materialization. The [Query guide](docs/usage/query.md) documents the full API and execution behavior.
 
 ## Folder Architecture
 
@@ -26,11 +67,12 @@ src/
 │   ├── Validated/ Validation values that can accumulate errors
 │   └── Tuple/   Fixed-arity tuple types
 ├── Collection/  Immutable and lazy collection abstractions
+├── Query/       Composable in-memory data processing pipelines
 ├── Pattern/     Variant values and pattern-matching support
 └── Exception/   Library-specific exceptions
 ```
 
-`Type` contains `Option`, `Either`, `Validated`, and tuple types. `Collection` contains reusable eager and lazy data structures such as vectors, maps, sets, deques, and sequences. `Pattern` provides named variants and matching for handling domain cases, and `Exception` keeps library-specific exceptions in one place.
+`Type` contains `Option`, `Either`, `Validated`, and tuple types. `Collection` contains reusable eager and lazy data structures such as vectors, maps, sets, deques, and sequences. `Query` composes any iterable collection without adding query-specific methods to collection classes. `Pattern` provides named variants and matching for handling domain cases, and `Exception` keeps library-specific exceptions in one place.
 
 The test tree mirrors these source areas. `tests/Unit` checks individual types and collection operations, `tests/Feature` exercises behavior across public APIs, and `tests/Integration` verifies how abstractions work together in domain and composition flows. Usage guides and design rationale are separated under `docs/usage` and `docs/technical`, respectively.
 
@@ -81,6 +123,7 @@ composer test
 
 - [Usage documentation](docs/usage/README.md)
 - [Technical documentation](docs/technical/README.md)
+- [Query API guide](docs/usage/query.md)
 
 ## Project Status
 

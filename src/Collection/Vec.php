@@ -7,6 +7,7 @@ namespace Exact\Collection;
 use ArrayIterator;
 use Countable;
 use Exact\Exception\EmptyCollectionException;
+use Exact\Type\Option\Option;
 use InvalidArgumentException;
 use IteratorAggregate;
 use JsonSerializable;
@@ -239,6 +240,33 @@ final readonly class Vec implements Countable, IteratorAggregate, JsonSerializab
     }
 
     /**
+     * Query-oriented projection for selecting a derived record from each item.
+     *
+     * This is semantically equivalent to map(), but names the intent more
+     * clearly for data-processing pipelines.
+     *
+     * @template U
+     * @param callable(T): U $projection
+     * @return self<U>
+     */
+    public function select(callable $projection): self
+    {
+        return $this->map($projection);
+    }
+
+    /**
+     * Alias for select(). Prefer select() in data-processing pipelines.
+     *
+     * @template U
+     * @param callable(T): U $projection
+     * @return self<U>
+     */
+    public function project(callable $projection): self
+    {
+        return $this->select($projection);
+    }
+
+    /**
      * @param callable(T): bool $predicate
      * @return self<T>
      */
@@ -249,6 +277,468 @@ final readonly class Vec implements Countable, IteratorAggregate, JsonSerializab
         foreach ($this->items as $item) {
             if ($predicate($item)) {
                 $result[] = $item;
+            }
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @template U
+     * @param callable(T): Option<U>|U|null $fn
+     * @return self<U>
+     */
+    public function filterMap(callable $fn): self
+    {
+        $result = [];
+
+        foreach ($this->items as $item) {
+            $mapped = $fn($item);
+
+            if ($mapped instanceof \Exact\Type\Option\Option) {
+                if ($mapped->isSome()) {
+                    $result[] = $mapped->getOrNull();
+                }
+
+                continue;
+            }
+
+            if ($mapped !== null) {
+                $result[] = $mapped;
+            }
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @param callable(T): bool $predicate
+     * @return array{0: self<T>, 1: self<T>}
+     */
+    public function partition(callable $predicate): array
+    {
+        $matches = [];
+        $others = [];
+
+        foreach ($this->items as $item) {
+            if ($predicate($item)) {
+                $matches[] = $item;
+                continue;
+            }
+
+            $others[] = $item;
+        }
+
+        return [new self($matches), new self($others)];
+    }
+
+    /**
+     * @template U
+     * @param U $initial
+     * @param callable(U, T): U $fn
+     * @return self<U>
+     */
+    public function scan(mixed $initial, callable $fn): self
+    {
+        $result = [$initial];
+        $accumulator = $initial;
+
+        foreach ($this->items as $item) {
+            $accumulator = $fn($accumulator, $item);
+            $result[] = $accumulator;
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @return self<mixed>
+     */
+    public function flatten(): self
+    {
+        $result = [];
+
+        foreach ($this->items as $item) {
+            if ($item instanceof self) {
+                foreach ($item->items as $inner) {
+                    $result[] = $inner;
+                }
+
+                continue;
+            }
+
+            if (is_array($item)) {
+                foreach ($item as $inner) {
+                    $result[] = $inner;
+                }
+
+                continue;
+            }
+
+            if ($item instanceof Traversable) {
+                foreach ($item as $inner) {
+                    $result[] = $inner;
+                }
+
+                continue;
+            }
+
+            $result[] = $item;
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @param callable(T): mixed $keySelector
+     * @return self<T>
+     */
+    public function distinctBy(callable $keySelector): self
+    {
+        $seen = [];
+        $result = [];
+
+        foreach ($this->items as $item) {
+            $key = $keySelector($item);
+            $token = is_scalar($key) || $key === null
+                ? gettype($key) . ':' . (string) $key
+                : serialize($key);
+
+            if (isset($seen[$token])) {
+                continue;
+            }
+
+            $seen[$token] = true;
+            $result[] = $item;
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @template K of array-key
+     * @param callable(T): K $keySelector
+     * @return Map<K, self<T>>
+     */
+    public function groupBy(callable $keySelector): Map
+    {
+        $groups = [];
+
+        foreach ($this->items as $item) {
+            $key = $keySelector($item);
+
+            if (!is_int($key) && !is_string($key)) {
+                throw new InvalidArgumentException(
+                    'Vec::groupBy() keys must be int or string.'
+                );
+            }
+
+            if (!isset($groups[$key])) {
+                $groups[$key] = [];
+            }
+
+            $groups[$key][] = $item;
+        }
+
+        $result = [];
+
+        foreach ($groups as $key => $items) {
+            $result[$key] = new self($items);
+        }
+
+        return Map::fromArray($result);
+    }
+
+    /**
+     * @template U
+     * @param callable(T): U $selector
+     * @return self<T>
+     */
+    public function sortBy(callable $selector): self
+    {
+        $items = $this->items;
+
+        usort($items, static fn (mixed $left, mixed $right): int =>
+            $selector($left) <=> $selector($right)
+        );
+
+        return new self($items);
+    }
+
+    /**
+     * @template U
+     * @param callable(T): U $selector
+     * @return T|null
+     */
+    public function minBy(callable $selector): mixed
+    {
+        if ($this->isEmpty()) {
+            return null;
+        }
+
+        $best = $this->items[0];
+        $bestValue = $selector($best);
+
+        foreach (array_slice($this->items, 1) as $item) {
+            $value = $selector($item);
+
+            if ($value < $bestValue) {
+                $best = $item;
+                $bestValue = $value;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @template U
+     * @param callable(T): U $selector
+     * @return T|null
+     */
+    public function maxBy(callable $selector): mixed
+    {
+        if ($this->isEmpty()) {
+            return null;
+        }
+
+        $best = $this->items[0];
+        $bestValue = $selector($best);
+
+        foreach (array_slice($this->items, 1) as $item) {
+            $value = $selector($item);
+
+            if ($value > $bestValue) {
+                $best = $item;
+                $bestValue = $value;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
+     * @template K of array-key
+     * @param callable(T): K $keySelector
+     * @return Map<K, T>
+     */
+    public function indexBy(callable $keySelector): Map
+    {
+        $result = [];
+
+        foreach ($this->items as $item) {
+            $key = $keySelector($item);
+
+            if (!is_int($key) && !is_string($key)) {
+                throw new InvalidArgumentException(
+                    'Vec::indexBy() keys must be int or string.'
+                );
+            }
+
+            $result[$key] = $item;
+        }
+
+        return Map::fromArray($result);
+    }
+
+    /**
+     * @template K of array-key
+     * @param callable(T): K $keySelector
+     * @return Map<K, T>
+     */
+    public function keyBy(callable $keySelector): Map
+    {
+        return $this->indexBy($keySelector);
+    }
+
+    /**
+     * @template K of array-key
+     * @template U
+     * @template V
+     * @param iterable<U> $other
+     * @param callable(T): K $leftKeySelector
+     * @param callable(U): K $rightKeySelector
+     * @param callable(T, U): V $combine
+     * @return self<V>
+     */
+    public function innerJoin(iterable $other, callable $leftKeySelector, callable $rightKeySelector, callable $combine): self
+    {
+        $rightValues = is_array($other) ? array_values($other) : iterator_to_array($other, false);
+        $rightGroups = [];
+
+        foreach ($rightValues as $rightItem) {
+            $key = $rightKeySelector($rightItem);
+            $token = self::joinToken($key);
+            $rightGroups[$token][] = $rightItem;
+        }
+
+        $result = [];
+
+        foreach ($this->items as $leftItem) {
+            $token = self::joinToken($leftKeySelector($leftItem));
+
+            foreach ($rightGroups[$token] ?? [] as $rightItem) {
+                $result[] = $combine($leftItem, $rightItem);
+            }
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @template K of array-key
+     * @template U
+     * @template V
+     * @param iterable<U> $other
+     * @param callable(T): K $leftKeySelector
+     * @param callable(U): K $rightKeySelector
+     * @param callable(T, Option<U>): V $combine
+     * @return self<V>
+     */
+    public function leftJoin(iterable $other, callable $leftKeySelector, callable $rightKeySelector, callable $combine): self
+    {
+        $rightValues = is_array($other) ? array_values($other) : iterator_to_array($other, false);
+        $rightGroups = [];
+
+        foreach ($rightValues as $rightItem) {
+            $key = $rightKeySelector($rightItem);
+            $token = self::joinToken($key);
+            $rightGroups[$token][] = $rightItem;
+        }
+
+        $result = [];
+
+        foreach ($this->items as $leftItem) {
+            $token = self::joinToken($leftKeySelector($leftItem));
+            $matches = $rightGroups[$token] ?? [];
+
+            if ($matches === []) {
+                $result[] = $combine($leftItem, Option::none());
+                continue;
+            }
+
+            foreach ($matches as $rightItem) {
+                $result[] = $combine($leftItem, Option::some($rightItem));
+            }
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @template K of array-key
+     * @template U
+     * @template V
+     * @param iterable<U> $other
+     * @param callable(T): K $leftKeySelector
+     * @param callable(U): K $rightKeySelector
+     * @param callable(Option<T>, U): V $combine
+     * @return self<V>
+     */
+    public function rightJoin(iterable $other, callable $leftKeySelector, callable $rightKeySelector, callable $combine): self
+    {
+        $rightValues = is_array($other) ? array_values($other) : iterator_to_array($other, false);
+        $leftGroups = [];
+
+        foreach ($this->items as $leftItem) {
+            $key = $leftKeySelector($leftItem);
+            $token = self::joinToken($key);
+            $leftGroups[$token][] = $leftItem;
+        }
+
+        $result = [];
+
+        foreach ($rightValues as $rightItem) {
+            $token = self::joinToken($rightKeySelector($rightItem));
+            $matches = $leftGroups[$token] ?? [];
+
+            if ($matches === []) {
+                $result[] = $combine(Option::none(), $rightItem);
+                continue;
+            }
+
+            foreach ($matches as $leftItem) {
+                $result[] = $combine(Option::some($leftItem), $rightItem);
+            }
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @template K of array-key
+     * @template U
+     * @template V
+     * @param iterable<U> $other
+     * @param callable(T): K $leftKeySelector
+     * @param callable(U): K $rightKeySelector
+     * @param callable(Option<T>, Option<U>): V $combine
+     * @return self<V>
+     */
+    public function fullJoin(iterable $other, callable $leftKeySelector, callable $rightKeySelector, callable $combine): self
+    {
+        $rightValues = is_array($other) ? array_values($other) : iterator_to_array($other, false);
+        $rightGroups = [];
+        $leftGroups = [];
+
+        foreach ($rightValues as $rightItem) {
+            $key = $rightKeySelector($rightItem);
+            $token = self::joinToken($key);
+            $rightGroups[$token][] = $rightItem;
+        }
+
+        foreach ($this->items as $leftItem) {
+            $token = self::joinToken($leftKeySelector($leftItem));
+            $leftGroups[$token][] = $leftItem;
+        }
+
+        $result = [];
+        $matchedTokens = [];
+
+        foreach ($this->items as $leftItem) {
+            $token = self::joinToken($leftKeySelector($leftItem));
+            $matches = $rightGroups[$token] ?? [];
+
+            if ($matches === []) {
+                $result[] = $combine(Option::some($leftItem), Option::none());
+                continue;
+            }
+
+            $matchedTokens[$token] = true;
+
+            foreach ($matches as $rightItem) {
+                $result[] = $combine(Option::some($leftItem), Option::some($rightItem));
+            }
+        }
+
+        foreach ($rightValues as $rightItem) {
+            $token = self::joinToken($rightKeySelector($rightItem));
+
+            if (isset($matchedTokens[$token]) || isset($leftGroups[$token])) {
+                continue;
+            }
+
+            $result[] = $combine(Option::none(), Option::some($rightItem));
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @template U
+     * @template V
+     * @param iterable<U> $other
+     * @param callable(T, U): V $combine
+     * @return self<V>
+     */
+    public function crossJoin(iterable $other, callable $combine): self
+    {
+        $rightValues = is_array($other) ? array_values($other) : iterator_to_array($other, false);
+        $result = [];
+
+        foreach ($this->items as $leftItem) {
+            foreach ($rightValues as $rightItem) {
+                $result[] = $combine($leftItem, $rightItem);
             }
         }
 
@@ -604,6 +1094,23 @@ final readonly class Vec implements Countable, IteratorAggregate, JsonSerializab
     public function toArray(): array
     {
         return $this->items;
+    }
+
+    private static function joinToken(mixed $value): string
+    {
+        if (is_int($value) || is_string($value)) {
+            return (string) $value;
+        }
+
+        if (is_bool($value)) {
+            return 'bool:' . ($value ? '1' : '0');
+        }
+
+        if ($value === null) {
+            return 'null';
+        }
+
+        return gettype($value) . ':' . serialize($value);
     }
 
     /**

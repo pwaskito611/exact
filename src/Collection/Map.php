@@ -305,6 +305,55 @@ final readonly class Map implements Countable, IteratorAggregate, JsonSerializab
     }
 
     /**
+     * @template U
+     * @param callable(TValue, TKey): Option<U>|U|null $fn
+     * @return self<TKey, U>
+     */
+    public function filterMap(callable $fn): self
+    {
+        $result = [];
+
+        foreach ($this->items as $key => $value) {
+            $mapped = $fn($value, $key);
+
+            if ($mapped instanceof \Exact\Type\Option\Option) {
+                if ($mapped->isSome()) {
+                    $result[$key] = $mapped->getOrNull();
+                }
+
+                continue;
+            }
+
+            if ($mapped !== null) {
+                $result[$key] = $mapped;
+            }
+        }
+
+        return new self($result);
+    }
+
+    /**
+     * @param callable(TValue, TKey): bool $predicate
+     * @return array{0: self<TKey, TValue>, 1: self<TKey, TValue>}
+     */
+    public function partition(callable $predicate): array
+    {
+        $matches = [];
+        $others = [];
+
+        foreach ($this->items as $key => $value) {
+            if ($predicate($value, $key)) {
+                $matches[$key] = $value;
+                continue;
+            }
+
+            $others[$key] = $value;
+        }
+
+        return [new self($matches), new self($others)];
+    }
+
+    /**
      * @param callable(TKey, TValue): bool $predicate
      * @return self<TKey, TValue>
      */

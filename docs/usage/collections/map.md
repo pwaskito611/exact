@@ -153,6 +153,18 @@ $onlyBook = $prices->filterKeys(
 
 `mapKeys()` can produce duplicate keys; the last entry written wins. No exception is thrown.
 
+`filterMap(callable $fn)` also receives `(value, key)`, transforms values, and omits entries whose result is `null` or `Option::none()`. An `Option::some($value)` or direct non-null result is stored under the original key. `partition(callable $predicate)` receives `(value, key)` and returns `[matching Map, non-matching Map]`, preserving keys and insertion order in both maps.
+
+```php
+[$available, $unavailable] = $prices->partition(
+    static fn (int $price): bool => $price > 0,
+);
+
+$priceLabels = $prices->filterMap(
+    static fn (int $price): ?string => $price > 5 ? "$price USD" : null,
+);
+```
+
 ## Reducing, Merging, and Side Effects
 
 ```php
@@ -234,6 +246,8 @@ $json = json_encode($prices);
 | `values` | `values(): array` | Return values in insertion order. |
 | `entries` | `entries(): array` | Return `[key, value]` pairs. |
 | `map` | `map(callable $fn): self` | Transform values; callback receives `(value, key)`. |
+| `filterMap` | `filterMap(callable $fn): self` | Transform values and omit `null`/`Option::none()`; retain original keys. |
+| `partition` | `partition(callable $predicate): array{Map, Map}` | Split by predicate; callback receives `(value, key)` and both maps retain keys. |
 | `mapKeys` | `mapKeys(callable $fn): self` | Transform keys; callback receives `(key, value)`. |
 | `filter` | `filter(callable $predicate): self` | Keep entries by value; callback receives `(value, key)`. |
 | `filterKeys` | `filterKeys(callable $predicate): self` | Keep entries by key; callback receives `(key, value)`. |

@@ -6,6 +6,7 @@ namespace Exact\Tests\Unit\Collection;
 
 use Exact\Collection\LazySeq;
 use Exact\Collection\Vec;
+use Exact\Type\Option\Option;
 use PHPUnit\Framework\TestCase;
 
 final class LazySeqTest extends TestCase
@@ -202,6 +203,72 @@ final class LazySeqTest extends TestCase
             [[1, 'a'], [2, 'b']],
             $result->toArray(),
         );
+    }
+
+    public function testFilterMapIsLazyAndDropsMissingValues(): void
+    {
+        $result = LazySeq::from([1, 2, 3, 4])
+            ->filterMap(
+                fn (int $value): Option => $value % 2 === 0
+                    ? Option::some($value * 10)
+                    : Option::none(),
+            )
+            ->toSeq();
+
+        self::assertSame([20, 40], $result->toArray());
+    }
+
+    public function testSelectProjectsLazyValues(): void
+    {
+        $result = LazySeq::from([1, 2, 3])
+            ->select(static fn (int $value): int => $value * 3)
+            ->toSeq();
+
+        self::assertSame([3, 6, 9], $result->toArray());
+    }
+
+    public function testScanProducesRunningTotals(): void
+    {
+        $result = LazySeq::from([1, 2, 3])
+            ->scan(0, fn (int $total, int $value): int => $total + $value)
+            ->toSeq();
+
+        self::assertSame([0, 1, 3, 6], $result->toArray());
+    }
+
+    public function testDistinctByFiltersDuplicateKeys(): void
+    {
+        $result = LazySeq::from(['apple', 'banana', 'apricot', 'pear'])
+            ->distinctBy(fn (string $value): string => substr($value, 0, 1))
+            ->toSeq();
+
+        self::assertSame(['apple', 'banana', 'pear'], $result->toArray());
+    }
+
+    public function testInnerJoinPairsMatchingRecords(): void
+    {
+        $result = LazySeq::from([
+            ['id' => 1, 'customer_id' => 10],
+            ['id' => 2, 'customer_id' => 20],
+        ])
+            ->innerJoin(
+                LazySeq::from([
+                    ['id' => 10, 'name' => 'Alice'],
+                    ['id' => 20, 'name' => 'Bob'],
+                ]),
+                static fn (array $order): int => $order['customer_id'],
+                static fn (array $customer): int => $customer['id'],
+                static fn (array $order, array $customer): array => [
+                    'order_id' => $order['id'],
+                    'customer_name' => $customer['name'],
+                ],
+            )
+            ->toSeq();
+
+        self::assertSame([
+            ['order_id' => 1, 'customer_name' => 'Alice'],
+            ['order_id' => 2, 'customer_name' => 'Bob'],
+        ], $result->toArray());
     }
 
     public function testChunkGroupsValuesIntoFixedSizeBuffers(): void
